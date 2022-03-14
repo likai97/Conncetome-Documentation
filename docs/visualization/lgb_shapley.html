@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
-<title>src.visualization.lgb_shapley API documentation</title>
+<title>connectome.visualization.lgb_shapley API documentation</title>
 <meta name="description" content="" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
@@ -19,7 +19,7 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>src.visualization.lgb_shapley</code></h1>
+<h1 class="title">Module <code>connectome.visualization.lgb_shapley</code></h1>
 </header>
 <section id="section-intro">
 <details class="source">
@@ -32,7 +32,7 @@ from lightgbm import LGBMModel, LGBMClassifier, LGBMRegressor
 import pandas as pd
 import numpy as np
 from sklearn.datasets import make_classification, make_regression
-from src.models.lgb import GB
+from connectome.models.lgb import GB
 
 
 class ShapleyLGB:
@@ -235,9 +235,9 @@ if __name__ == &#34;__main__&#34;:
 <section>
 <h2 class="section-title" id="header-classes">Classes</h2>
 <dl>
-<dt id="src.visualization.lgb_shapley.ShapleyLGB"><code class="flex name class">
+<dt id="connectome.visualization.lgb_shapley.ShapleyLGB"><code class="flex name class">
 <span>class <span class="ident">ShapleyLGB</span></span>
-<span>(</span><span>model: Union[lightgbm.sklearn.LGBMModel, <a title="src.models.lgb.GB" href="../models/lgb.html#src.models.lgb.GB">GB</a>], data: pandas.core.frame.DataFrame)</span>
+<span>(</span><span>model: Union[lightgbm.sklearn.LGBMModel, <a title="connectome.models.lgb.GB" href="../models/lgb.html#connectome.models.lgb.GB">GB</a>], data: pandas.core.frame.DataFrame)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>class to efficiently use/compute and visualise shapley values
@@ -394,7 +394,7 @@ for a given lgb model</p></div>
 </details>
 <h3>Methods</h3>
 <dl>
-<dt id="src.visualization.lgb_shapley.ShapleyLGB.depend_plot"><code class="name flex">
+<dt id="connectome.visualization.lgb_shapley.ShapleyLGB.depend_plot"><code class="name flex">
 <span>def <span class="ident">depend_plot</span></span>(<span>self, feature_ind: int) ‑> None</span>
 </code></dt>
 <dd>
@@ -426,7 +426,7 @@ for a given lgb model</p></div>
                          self.feature_names)</code></pre>
 </details>
 </dd>
-<dt id="src.visualization.lgb_shapley.ShapleyLGB.explain_prediction"><code class="name flex">
+<dt id="connectome.visualization.lgb_shapley.ShapleyLGB.explain_prediction"><code class="name flex">
 <span>def <span class="ident">explain_prediction</span></span>(<span>self, ind: int) ‑> pandas.core.frame.DataFrame</span>
 </code></dt>
 <dd>
@@ -461,7 +461,7 @@ for the chosen observation</p></div>
     })</code></pre>
 </details>
 </dd>
-<dt id="src.visualization.lgb_shapley.ShapleyLGB.get_shapley_values"><code class="name flex">
+<dt id="connectome.visualization.lgb_shapley.ShapleyLGB.get_shapley_values"><code class="name flex">
 <span>def <span class="ident">get_shapley_values</span></span>(<span>self) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
@@ -474,7 +474,7 @@ for the chosen observation</p></div>
     return self.shap_values</code></pre>
 </details>
 </dd>
-<dt id="src.visualization.lgb_shapley.ShapleyLGB.get_shapley_values_df"><code class="name flex">
+<dt id="connectome.visualization.lgb_shapley.ShapleyLGB.get_shapley_values_df"><code class="name flex">
 <span>def <span class="ident">get_shapley_values_df</span></span>(<span>self) ‑> pandas.core.frame.DataFrame</span>
 </code></dt>
 <dd>
@@ -488,7 +488,7 @@ for the chosen observation</p></div>
                         columns=self.feature_names)</code></pre>
 </details>
 </dd>
-<dt id="src.visualization.lgb_shapley.ShapleyLGB.interaction_values"><code class="name flex">
+<dt id="connectome.visualization.lgb_shapley.ShapleyLGB.interaction_values"><code class="name flex">
 <span>def <span class="ident">interaction_values</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -501,7 +501,7 @@ for the chosen observation</p></div>
     raise NotImplementedError</code></pre>
 </details>
 </dd>
-<dt id="src.visualization.lgb_shapley.ShapleyLGB.plot_n_imp"><code class="name flex">
+<dt id="connectome.visualization.lgb_shapley.ShapleyLGB.plot_n_imp"><code class="name flex">
 <span>def <span class="ident">plot_n_imp</span></span>(<span>self, n: int = 10) ‑> None</span>
 </code></dt>
 <dd>
@@ -535,7 +535,7 @@ for the chosen observation</p></div>
         self.depend_plot(i)</code></pre>
 </details>
 </dd>
-<dt id="src.visualization.lgb_shapley.ShapleyLGB.plot_single_prediction"><code class="name flex">
+<dt id="connectome.visualization.lgb_shapley.ShapleyLGB.plot_single_prediction"><code class="name flex">
 <span>def <span class="ident">plot_single_prediction</span></span>(<span>self, ind: int) ‑> shap.plots._force.AdditiveForceVisualizer</span>
 </code></dt>
 <dd>
@@ -569,7 +569,7 @@ for the chosen observation</p></div>
                            self.data.iloc[ind, :])</code></pre>
 </details>
 </dd>
-<dt id="src.visualization.lgb_shapley.ShapleyLGB.shapley_importance"><code class="name flex">
+<dt id="connectome.visualization.lgb_shapley.ShapleyLGB.shapley_importance"><code class="name flex">
 <span>def <span class="ident">shapley_importance</span></span>(<span>self, n: int = 10)</span>
 </code></dt>
 <dd>
@@ -613,7 +613,7 @@ and the index of the respective column</p></div>
     return self.n_import</code></pre>
 </details>
 </dd>
-<dt id="src.visualization.lgb_shapley.ShapleyLGB.summ_plot"><code class="name flex">
+<dt id="connectome.visualization.lgb_shapley.ShapleyLGB.summ_plot"><code class="name flex">
 <span>def <span class="ident">summ_plot</span></span>(<span>self, max_features: int = 25) ‑> None</span>
 </code></dt>
 <dd>
@@ -644,7 +644,7 @@ and the index of the respective column</p></div>
                       max_display=max_features)</code></pre>
 </details>
 </dd>
-<dt id="src.visualization.lgb_shapley.ShapleyLGB.update_data"><code class="name flex">
+<dt id="connectome.visualization.lgb_shapley.ShapleyLGB.update_data"><code class="name flex">
 <span>def <span class="ident">update_data</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -657,7 +657,7 @@ and the index of the respective column</p></div>
     raise NotImplementedError</code></pre>
 </details>
 </dd>
-<dt id="src.visualization.lgb_shapley.ShapleyLGB.update_model"><code class="name flex">
+<dt id="connectome.visualization.lgb_shapley.ShapleyLGB.update_model"><code class="name flex">
 <span>def <span class="ident">update_model</span></span>(<span>self)</span>
 </code></dt>
 <dd>
@@ -683,25 +683,25 @@ and the index of the respective column</p></div>
 <ul id="index">
 <li><h3>Super-module</h3>
 <ul>
-<li><code><a title="src.visualization" href="index.html">src.visualization</a></code></li>
+<li><code><a title="connectome.visualization" href="index.html">connectome.visualization</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-classes">Classes</a></h3>
 <ul>
 <li>
-<h4><code><a title="src.visualization.lgb_shapley.ShapleyLGB" href="#src.visualization.lgb_shapley.ShapleyLGB">ShapleyLGB</a></code></h4>
+<h4><code><a title="connectome.visualization.lgb_shapley.ShapleyLGB" href="#connectome.visualization.lgb_shapley.ShapleyLGB">ShapleyLGB</a></code></h4>
 <ul class="">
-<li><code><a title="src.visualization.lgb_shapley.ShapleyLGB.depend_plot" href="#src.visualization.lgb_shapley.ShapleyLGB.depend_plot">depend_plot</a></code></li>
-<li><code><a title="src.visualization.lgb_shapley.ShapleyLGB.explain_prediction" href="#src.visualization.lgb_shapley.ShapleyLGB.explain_prediction">explain_prediction</a></code></li>
-<li><code><a title="src.visualization.lgb_shapley.ShapleyLGB.get_shapley_values" href="#src.visualization.lgb_shapley.ShapleyLGB.get_shapley_values">get_shapley_values</a></code></li>
-<li><code><a title="src.visualization.lgb_shapley.ShapleyLGB.get_shapley_values_df" href="#src.visualization.lgb_shapley.ShapleyLGB.get_shapley_values_df">get_shapley_values_df</a></code></li>
-<li><code><a title="src.visualization.lgb_shapley.ShapleyLGB.interaction_values" href="#src.visualization.lgb_shapley.ShapleyLGB.interaction_values">interaction_values</a></code></li>
-<li><code><a title="src.visualization.lgb_shapley.ShapleyLGB.plot_n_imp" href="#src.visualization.lgb_shapley.ShapleyLGB.plot_n_imp">plot_n_imp</a></code></li>
-<li><code><a title="src.visualization.lgb_shapley.ShapleyLGB.plot_single_prediction" href="#src.visualization.lgb_shapley.ShapleyLGB.plot_single_prediction">plot_single_prediction</a></code></li>
-<li><code><a title="src.visualization.lgb_shapley.ShapleyLGB.shapley_importance" href="#src.visualization.lgb_shapley.ShapleyLGB.shapley_importance">shapley_importance</a></code></li>
-<li><code><a title="src.visualization.lgb_shapley.ShapleyLGB.summ_plot" href="#src.visualization.lgb_shapley.ShapleyLGB.summ_plot">summ_plot</a></code></li>
-<li><code><a title="src.visualization.lgb_shapley.ShapleyLGB.update_data" href="#src.visualization.lgb_shapley.ShapleyLGB.update_data">update_data</a></code></li>
-<li><code><a title="src.visualization.lgb_shapley.ShapleyLGB.update_model" href="#src.visualization.lgb_shapley.ShapleyLGB.update_model">update_model</a></code></li>
+<li><code><a title="connectome.visualization.lgb_shapley.ShapleyLGB.depend_plot" href="#connectome.visualization.lgb_shapley.ShapleyLGB.depend_plot">depend_plot</a></code></li>
+<li><code><a title="connectome.visualization.lgb_shapley.ShapleyLGB.explain_prediction" href="#connectome.visualization.lgb_shapley.ShapleyLGB.explain_prediction">explain_prediction</a></code></li>
+<li><code><a title="connectome.visualization.lgb_shapley.ShapleyLGB.get_shapley_values" href="#connectome.visualization.lgb_shapley.ShapleyLGB.get_shapley_values">get_shapley_values</a></code></li>
+<li><code><a title="connectome.visualization.lgb_shapley.ShapleyLGB.get_shapley_values_df" href="#connectome.visualization.lgb_shapley.ShapleyLGB.get_shapley_values_df">get_shapley_values_df</a></code></li>
+<li><code><a title="connectome.visualization.lgb_shapley.ShapleyLGB.interaction_values" href="#connectome.visualization.lgb_shapley.ShapleyLGB.interaction_values">interaction_values</a></code></li>
+<li><code><a title="connectome.visualization.lgb_shapley.ShapleyLGB.plot_n_imp" href="#connectome.visualization.lgb_shapley.ShapleyLGB.plot_n_imp">plot_n_imp</a></code></li>
+<li><code><a title="connectome.visualization.lgb_shapley.ShapleyLGB.plot_single_prediction" href="#connectome.visualization.lgb_shapley.ShapleyLGB.plot_single_prediction">plot_single_prediction</a></code></li>
+<li><code><a title="connectome.visualization.lgb_shapley.ShapleyLGB.shapley_importance" href="#connectome.visualization.lgb_shapley.ShapleyLGB.shapley_importance">shapley_importance</a></code></li>
+<li><code><a title="connectome.visualization.lgb_shapley.ShapleyLGB.summ_plot" href="#connectome.visualization.lgb_shapley.ShapleyLGB.summ_plot">summ_plot</a></code></li>
+<li><code><a title="connectome.visualization.lgb_shapley.ShapleyLGB.update_data" href="#connectome.visualization.lgb_shapley.ShapleyLGB.update_data">update_data</a></code></li>
+<li><code><a title="connectome.visualization.lgb_shapley.ShapleyLGB.update_model" href="#connectome.visualization.lgb_shapley.ShapleyLGB.update_model">update_model</a></code></li>
 </ul>
 </li>
 </ul>

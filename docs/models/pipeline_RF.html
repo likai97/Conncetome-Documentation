@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
-<title>src.models.pipeline_RF API documentation</title>
-<meta name="description" content="" />
+<title>connectome.models.pipeline_RF API documentation</title>
+<meta name="description" content="Run Random Forest" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -19,281 +19,56 @@
 <main>
 <article id="content">
 <header>
-<h1 class="title">Module <code>src.models.pipeline_RF</code></h1>
+<h1 class="title">Module <code>connectome.models.pipeline_RF</code></h1>
 </header>
 <section id="section-intro">
+<p>Run Random Forest</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">import pandas as pd
+<pre><code class="python">&#34;&#34;&#34;
+Run Random Forest
+&#34;&#34;&#34;
+import pandas as pd
 import numpy as np
-# import h5py
-import matplotlib.pyplot as plt
-import seaborn as sns
-
-# Modeling libraries
-from sklearn.impute import KNNImputer
-from sklearn.model_selection import train_test_split,  GridSearchCV
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, plot_confusion_matrix
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import Pipeline
-
-# from sklearn.feature_selection import VarianceThreshold &lt;- use to remove low variance features
-# from bayes_opt import BayesianOptimization #!pip install bayesian-optimization
+from sklearn.ensemble import RandomForestRegressor
 
 
-def print_results(accuracy, precision, recall, f1, auc):
-    # print all values
-    print(f&#34;Accuracy: {accuracy}&#34;)
-    print(f&#34;Precision: {precision}&#34;)
-    print(f&#34;Recall: {recall}&#34;)
-    print(f&#34;F1 score: {f1}&#34;)
-    print(f&#34;ROC AUC: {auc}&#34;)
-
-
-def read_data_file(file_path, load_mem_score=False):
+def run_random_forest(X_train, y_train, 
+                            classification: bool = True, verbose = 1,
+                            **kwargs):
     &#34;&#34;&#34;
-    Import train.csv and test.csv files from data path
-
-    Args:
-        file_path (str):        file path
-        load_mem_score (bool):  if true, the mem_score is included
-
-    Returns:
-    train and test data
-    &#34;&#34;&#34;
-    data = pd.read_csv(file_path + &#39;\\train.csv&#39;)
-    test = pd.read_csv(file_path + &#39;\\test.csv&#39;)
-
-    # preprocess data file
-    has_alzheimer = data.prmdiag.isin([2, 3])
-    no_alzheimer = data.prmdiag.isin([0])
-    data.loc[has_alzheimer, &#39;target&#39;] = 1
-    data.loc[no_alzheimer, &#39;target&#39;] = 0
-    data.dropna(subset=[&#39;target&#39;], axis=0, inplace=True)
-    data.drop([&#39;ConnID&#39;, &#39;Repseudonym&#39;, &#39;visdat&#39;, &#39;siteid&#39;, &#39;IDs&#39;, &#39;prmdiag&#39;], axis=1, inplace=True)
-    if not load_mem_score:
-        data.drop(&#39;MEM_score&#39;, axis=1, inplace=True)
-    features = data.drop(&#39;target&#39;, axis=1)
-    labels = data[&#39;target&#39;]
-    # n_features = features.shape[1]
-
-    # preprocess test file
-    has_alzheimer = test.prmdiag.isin([2, 3])
-    no_alzheimer = test.prmdiag.isin([0])
-    test.loc[has_alzheimer, &#39;target&#39;] = 1
-    test.loc[no_alzheimer, &#39;target&#39;] = 0
-    test.dropna(subset=[&#39;target&#39;], axis=0, inplace=True)
-    test.drop([&#39;ConnID&#39;, &#39;Repseudonym&#39;, &#39;visdat&#39;, &#39;siteid&#39;, &#39;IDs&#39;, &#39;prmdiag&#39;], axis=1, inplace=True)
-    if not load_mem_score:
-        test.drop(&#39;MEM_score&#39;, axis=1, inplace=True)
-    x_test = test.drop(&#39;target&#39;, axis=1)
-    y_test = test[&#39;target&#39;]
-
-    # Train Test Split
-    # x_train, X_valid, y_train, y_valid = train_test_split(features, labels, test_size = 0.2, random_state = 42, stratify = labels)
-    x_train, y_train = features, labels
-
-    return x_train, x_test, y_train, y_test
-
-
-# create input pipeline / preprocessing
-def preprocess_random_forest(file_path, load_mem_score):
-    x_train, x_test, y_train, y_test = read_data_file(file_path, load_mem_score)
-    features = x_train.copy()
-
-    # impute missing values
-    # print(features[features.isna().any(axis=1)])
-    imp = KNNImputer(missing_values=np.nan, n_neighbors=7)
-    x_train = imp.fit_transform(x_train)
-    # X_valid = imp.transform(X_valid)
-    x_test = imp.transform(x_test)
-
-    # scale data
-    scaler = StandardScaler()
-    x_train = scaler.fit_transform(x_train)
-    # X_valid = scaler.transform(X_valid)
-    x_test = scaler.transform(x_test)
-
-    return x_train, x_test, y_train, y_test, features
-
-
-# run random forest model
-def run_random_forest(x_train, x_test, y_train, y_test, features):
-    &#34;&#34;&#34;
-    Run Training algorithm of random forest model
-    and evaluate result based on test data
-
-    Args:
-        x_train (np.array):         training input
-        x_test (pd.DataFrame):      test input
-        y_train (pd.Series):        training output
-        y_test (pd.Series):         test output
-        features (pd.DataFrame):    original training input, used for feature names
-
-    Returns:
-        returns rf model if no test data is specified,
-        else returns None
+  Function that fits a random forest model. 
+  See also https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html and https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html
+  
+  Args:
+        X_train: The training dataset
+        y_train: The true labels
+        classification: classification task -&gt; logistic regression or regression task -&gt; linear model
+        verbose: amount of verbosity, default = 1 
+        
+  Returns:
+        Returns fitted model
     &#34;&#34;&#34;
 
-    # run model
-    rf = RandomForestClassifier(n_estimators=500, random_state=42)
-    rf.fit(x_train, np.ravel(y_train))
-
-    if x_test is None:
-        # skip evaluation and pass trained model
-        return rf
-
-    # visualization
-    # extract feature importance array
-    feature_imp = pd.Series(rf.feature_importances_, index=features.columns).sort_values(ascending=False)
-    feature_imp = feature_imp[:10]
-
-    # plot feature importance
-    sns.barplot(x=feature_imp, y=feature_imp.index)
-    # Add labels to your graph
-    plt.xlabel(&#39;Feature Importance Score&#39;)
-    plt.ylabel(&#39;Features&#39;)
-    plt.title(&#34;Visualizing Important Features&#34;)
-    plt.legend()
-    plt.show()
-
-    # Evaluation
-    predictions = rf.predict(x_test)
-    accuracy = accuracy_score(y_test, predictions)
-    precision = precision_score(y_test, predictions)
-    recall = recall_score(y_test, predictions)
-    f1 = f1_score(y_test, predictions)
-    auc = roc_auc_score(y_test, predictions)
-    # print results
-    print_results(accuracy, precision, recall, f1, auc)
-
-    pd.DataFrame({&#34;Accuracy&#34;: [accuracy], &#34;Precision&#34;: [precision], &#34;Recall&#34;: [recall], &#34;F1&#34;: [f1], &#34;AUC&#34;: [auc]})
-    plot_confusion_matrix(rf, x_test, y_test)
-    importances = list(rf.feature_importances_)
-    feature_list = list(features.columns)
-    feature_importances = [(feature, round(importance, 10)) for feature, importance in zip(feature_list, importances)]
-    feature_importances = sorted(feature_importances, key=lambda x: x[1], reverse=True)
-    # Print out the feature and importances
-    [print(&#39;Variable: {:20} Importance: {}&#39;.format(*pair)) for pair in feature_importances[:10]]
-
-    return None
+    assert isinstance(X_train, pd.DataFrame), &#34;provided X_train is no pd.DataFrame&#34;
+    assert isinstance(y_train, pd.Series), &#34;provided y_train is no pd.Series&#34;
 
 
-def run_lin_regression(x_train, x_test, y_train, y_test):
-    logreg = LogisticRegression(penalty=&#39;elasticnet&#39;, solver=&#39;saga&#39;)
-    params_grid = {&#39;l1_ratio&#39;: np.linspace(0, 1, 11)}
-    grid_clf = GridSearchCV(estimator=logreg, param_grid=params_grid, n_jobs=-1, cv=10, verbose=3)
-    grid_clf.fit(x_train, y_train)
-    grid_clf.best_estimator_
-    grid_clf.best_params_
-
-    logreg = LogisticRegression(penalty=&#39;l2&#39;, solver=&#39;lbfgs&#39;)
-    logreg.fit(x_train, y_train)
-    predictions = logreg.predict(x_test)
-
-    accuracy = accuracy_score(y_test, predictions)
-    precision = precision_score(y_test, predictions)
-    recall = recall_score(y_test, predictions)
-    f1 = f1_score(y_test, predictions)
-    auc = roc_auc_score(y_test, predictions)
-    # print results
-    print_results(accuracy, precision, recall, f1, auc)
-
-    pd.DataFrame({&#34;Accuracy&#34;: [accuracy], &#34;Precision&#34;: [precision], &#34;Recall&#34;: [recall], &#34;F1&#34;: [f1], &#34;AUC&#34;: [auc]})
-
-    plot_confusion_matrix(logreg, x_test, y_test)
-
-    return None
-
-
-def pca_pipeline_test(file_path, load_mem_score):
-    x_train, x_test, y_train, y_test = read_data_file(file_path, load_mem_score)
-
-    pipeline = Pipeline([
-        (&#39;KNN_Impute&#39;, KNNImputer(missing_values=np.nan, n_neighbors=7)),
-        (&#39;scale&#39;, StandardScaler()),
-        (&#39;PCA&#39;, PCA(n_components=.95)),
-    ])
-
-    x_train = pipeline.fit_transform(x_train)
-    x_test = pipeline.transform(x_test)
-    x_train.shape[1] == x_test.shape[1]
-    logreg = LogisticRegression(penalty=&#39;elasticnet&#39;, solver=&#39;saga&#39;)
-    params_grid = {&#39;l1_ratio&#39;: np.linspace(0, 1, 11)}
-
-    grd_search = GridSearchCV(estimator=logreg, param_grid=params_grid, n_jobs=-1, cv=10, verbose=3)
-    grd_search.fit(x_train, y_train)
-    grd_search.best_params_
-
-    logreg = LogisticRegression(penalty=&#39;elasticnet&#39;, solver=&#39;saga&#39;, l1_ratio=.9)
-    logreg.fit(x_train, y_train)
-
-    # Instantiate model with 1000 decision trees
-    rf = RandomForestClassifier(n_estimators=500, random_state=42)
-    rf.fit(x_train, y_train)
-
-    log_pred = logreg.predict(x_test)
-    rf_pred = rf.predict(x_test)
-    model = [&#39;LogReg&#39;, &#39;RF&#39;]
-    accuracy = []
-    precision = []
-    recall = []
-    f1 = []
-    auc = []
-    accuracy.append(accuracy_score(y_test, log_pred))
-    precision.append(precision_score(y_test, log_pred))
-    recall.append(recall_score(y_test, log_pred))
-    f1.append(f1_score(y_test, log_pred))
-    auc.append(roc_auc_score(y_test, log_pred))
-    # rf
-    accuracy.append(accuracy_score(y_test, rf_pred))
-    precision.append(precision_score(y_test, rf_pred))
-    recall.append(recall_score(y_test, rf_pred))
-    f1.append(f1_score(y_test, rf_pred))
-    auc.append(roc_auc_score(y_test, rf_pred))
-    # print results
-    print(f&#34;Model: {model}&#34;)
-    print_results(accuracy, precision, recall, f1, auc)
-
-    pd.DataFrame({&#39;Model&#39;: model, &#34;Accuracy&#34;: accuracy, &#34;Precision&#34;: precision, &#34;Recall&#34;: recall, &#34;F1&#34;: f1, &#34;AUC&#34;: auc})
-    plot_confusion_matrix(logreg, x_test, y_test)
-    plot_confusion_matrix(rf, x_test, y_test)
-
-
-if __name__ == &#39;__main__&#39;:
-    # run flags
-    binary_classifier_flag = True  # set flag for binary training, else regression
-    run_test_flag = False   # run test files for both algorithms
-    load_mem_score = False  # load dataset without MEM_score
-
-    # file_path = r&#34;C:\Users\likai\Desktop\My Life\Master\3. Semester\Innolabs\Connectome Git\00_Data\Results&#34;
-    file_path = r&#34;C:\Users\katha\Downloads\Test&#34;
-
-    # start preprocess
-    print(&#34;Start preprocessing&#34;)
-    x_train, x_test, y_train, y_test, features = preprocess_random_forest(file_path, load_mem_score)
-
-    # check classifier
-    if binary_classifier_flag:
-        # start random forest model
-        print(&#34;Start RF model&#34;)
-        run_random_forest(x_train, x_test, y_train, y_test, features)
-
+    if classification:
+    
+      model = RandomForestClassifier(verbose = verbose, **kwargs)
+    
     else:
-        print(&#34;Start lr model&#34;)
-        run_lin_regression(x_train, x_test, y_train, y_test)
-        # start linear regression model
 
-    if run_test_flag:
-        print(&#34;Run PCA test pipeline&#34;)
-        pca_pipeline_test(file_path, load_mem_score)
+      model = RandomForestRegressor(verbose = verbose, **kwargs)
+    
 
-    print(&#34;Finished RF_pipeline&#34;)</code></pre>
+    fit_model = model.fit(X_train, y_train)
+
+    return fit_model  </code></pre>
 </details>
 </section>
 <section>
@@ -303,313 +78,62 @@ if __name__ == &#39;__main__&#39;:
 <section>
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
-<dt id="src.models.pipeline_RF.pca_pipeline_test"><code class="name flex">
-<span>def <span class="ident">pca_pipeline_test</span></span>(<span>file_path, load_mem_score)</span>
+<dt id="connectome.models.pipeline_RF.run_random_forest"><code class="name flex">
+<span>def <span class="ident">run_random_forest</span></span>(<span>X_train, y_train, classification: bool = True, verbose=1, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def pca_pipeline_test(file_path, load_mem_score):
-    x_train, x_test, y_train, y_test = read_data_file(file_path, load_mem_score)
-
-    pipeline = Pipeline([
-        (&#39;KNN_Impute&#39;, KNNImputer(missing_values=np.nan, n_neighbors=7)),
-        (&#39;scale&#39;, StandardScaler()),
-        (&#39;PCA&#39;, PCA(n_components=.95)),
-    ])
-
-    x_train = pipeline.fit_transform(x_train)
-    x_test = pipeline.transform(x_test)
-    x_train.shape[1] == x_test.shape[1]
-    logreg = LogisticRegression(penalty=&#39;elasticnet&#39;, solver=&#39;saga&#39;)
-    params_grid = {&#39;l1_ratio&#39;: np.linspace(0, 1, 11)}
-
-    grd_search = GridSearchCV(estimator=logreg, param_grid=params_grid, n_jobs=-1, cv=10, verbose=3)
-    grd_search.fit(x_train, y_train)
-    grd_search.best_params_
-
-    logreg = LogisticRegression(penalty=&#39;elasticnet&#39;, solver=&#39;saga&#39;, l1_ratio=.9)
-    logreg.fit(x_train, y_train)
-
-    # Instantiate model with 1000 decision trees
-    rf = RandomForestClassifier(n_estimators=500, random_state=42)
-    rf.fit(x_train, y_train)
-
-    log_pred = logreg.predict(x_test)
-    rf_pred = rf.predict(x_test)
-    model = [&#39;LogReg&#39;, &#39;RF&#39;]
-    accuracy = []
-    precision = []
-    recall = []
-    f1 = []
-    auc = []
-    accuracy.append(accuracy_score(y_test, log_pred))
-    precision.append(precision_score(y_test, log_pred))
-    recall.append(recall_score(y_test, log_pred))
-    f1.append(f1_score(y_test, log_pred))
-    auc.append(roc_auc_score(y_test, log_pred))
-    # rf
-    accuracy.append(accuracy_score(y_test, rf_pred))
-    precision.append(precision_score(y_test, rf_pred))
-    recall.append(recall_score(y_test, rf_pred))
-    f1.append(f1_score(y_test, rf_pred))
-    auc.append(roc_auc_score(y_test, rf_pred))
-    # print results
-    print(f&#34;Model: {model}&#34;)
-    print_results(accuracy, precision, recall, f1, auc)
-
-    pd.DataFrame({&#39;Model&#39;: model, &#34;Accuracy&#34;: accuracy, &#34;Precision&#34;: precision, &#34;Recall&#34;: recall, &#34;F1&#34;: f1, &#34;AUC&#34;: auc})
-    plot_confusion_matrix(logreg, x_test, y_test)
-    plot_confusion_matrix(rf, x_test, y_test)</code></pre>
-</details>
-</dd>
-<dt id="src.models.pipeline_RF.preprocess_random_forest"><code class="name flex">
-<span>def <span class="ident">preprocess_random_forest</span></span>(<span>file_path, load_mem_score)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def preprocess_random_forest(file_path, load_mem_score):
-    x_train, x_test, y_train, y_test = read_data_file(file_path, load_mem_score)
-    features = x_train.copy()
-
-    # impute missing values
-    # print(features[features.isna().any(axis=1)])
-    imp = KNNImputer(missing_values=np.nan, n_neighbors=7)
-    x_train = imp.fit_transform(x_train)
-    # X_valid = imp.transform(X_valid)
-    x_test = imp.transform(x_test)
-
-    # scale data
-    scaler = StandardScaler()
-    x_train = scaler.fit_transform(x_train)
-    # X_valid = scaler.transform(X_valid)
-    x_test = scaler.transform(x_test)
-
-    return x_train, x_test, y_train, y_test, features</code></pre>
-</details>
-</dd>
-<dt id="src.models.pipeline_RF.print_results"><code class="name flex">
-<span>def <span class="ident">print_results</span></span>(<span>accuracy, precision, recall, f1, auc)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def print_results(accuracy, precision, recall, f1, auc):
-    # print all values
-    print(f&#34;Accuracy: {accuracy}&#34;)
-    print(f&#34;Precision: {precision}&#34;)
-    print(f&#34;Recall: {recall}&#34;)
-    print(f&#34;F1 score: {f1}&#34;)
-    print(f&#34;ROC AUC: {auc}&#34;)</code></pre>
-</details>
-</dd>
-<dt id="src.models.pipeline_RF.read_data_file"><code class="name flex">
-<span>def <span class="ident">read_data_file</span></span>(<span>file_path, load_mem_score=False)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Import train.csv and test.csv files from data path</p>
+<div class="desc"><p>Function that fits a random forest model.
+See also <a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html">https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html</a> and <a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html">https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html</a></p>
 <h2 id="args">Args</h2>
 <dl>
-<dt><strong><code>file_path</code></strong> :&ensp;<code>str</code></dt>
-<dd>
-<p>file path</p>
-</dd>
-<dt><strong><code>load_mem_score</code></strong> :&ensp;<code>bool</code></dt>
-<dd>if true, the mem_score is included</dd>
-</dl>
-<p>Returns:
-train and test data</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def read_data_file(file_path, load_mem_score=False):
-    &#34;&#34;&#34;
-    Import train.csv and test.csv files from data path
-
-    Args:
-        file_path (str):        file path
-        load_mem_score (bool):  if true, the mem_score is included
-
-    Returns:
-    train and test data
-    &#34;&#34;&#34;
-    data = pd.read_csv(file_path + &#39;\\train.csv&#39;)
-    test = pd.read_csv(file_path + &#39;\\test.csv&#39;)
-
-    # preprocess data file
-    has_alzheimer = data.prmdiag.isin([2, 3])
-    no_alzheimer = data.prmdiag.isin([0])
-    data.loc[has_alzheimer, &#39;target&#39;] = 1
-    data.loc[no_alzheimer, &#39;target&#39;] = 0
-    data.dropna(subset=[&#39;target&#39;], axis=0, inplace=True)
-    data.drop([&#39;ConnID&#39;, &#39;Repseudonym&#39;, &#39;visdat&#39;, &#39;siteid&#39;, &#39;IDs&#39;, &#39;prmdiag&#39;], axis=1, inplace=True)
-    if not load_mem_score:
-        data.drop(&#39;MEM_score&#39;, axis=1, inplace=True)
-    features = data.drop(&#39;target&#39;, axis=1)
-    labels = data[&#39;target&#39;]
-    # n_features = features.shape[1]
-
-    # preprocess test file
-    has_alzheimer = test.prmdiag.isin([2, 3])
-    no_alzheimer = test.prmdiag.isin([0])
-    test.loc[has_alzheimer, &#39;target&#39;] = 1
-    test.loc[no_alzheimer, &#39;target&#39;] = 0
-    test.dropna(subset=[&#39;target&#39;], axis=0, inplace=True)
-    test.drop([&#39;ConnID&#39;, &#39;Repseudonym&#39;, &#39;visdat&#39;, &#39;siteid&#39;, &#39;IDs&#39;, &#39;prmdiag&#39;], axis=1, inplace=True)
-    if not load_mem_score:
-        test.drop(&#39;MEM_score&#39;, axis=1, inplace=True)
-    x_test = test.drop(&#39;target&#39;, axis=1)
-    y_test = test[&#39;target&#39;]
-
-    # Train Test Split
-    # x_train, X_valid, y_train, y_valid = train_test_split(features, labels, test_size = 0.2, random_state = 42, stratify = labels)
-    x_train, y_train = features, labels
-
-    return x_train, x_test, y_train, y_test</code></pre>
-</details>
-</dd>
-<dt id="src.models.pipeline_RF.run_lin_regression"><code class="name flex">
-<span>def <span class="ident">run_lin_regression</span></span>(<span>x_train, x_test, y_train, y_test)</span>
-</code></dt>
-<dd>
-<div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def run_lin_regression(x_train, x_test, y_train, y_test):
-    logreg = LogisticRegression(penalty=&#39;elasticnet&#39;, solver=&#39;saga&#39;)
-    params_grid = {&#39;l1_ratio&#39;: np.linspace(0, 1, 11)}
-    grid_clf = GridSearchCV(estimator=logreg, param_grid=params_grid, n_jobs=-1, cv=10, verbose=3)
-    grid_clf.fit(x_train, y_train)
-    grid_clf.best_estimator_
-    grid_clf.best_params_
-
-    logreg = LogisticRegression(penalty=&#39;l2&#39;, solver=&#39;lbfgs&#39;)
-    logreg.fit(x_train, y_train)
-    predictions = logreg.predict(x_test)
-
-    accuracy = accuracy_score(y_test, predictions)
-    precision = precision_score(y_test, predictions)
-    recall = recall_score(y_test, predictions)
-    f1 = f1_score(y_test, predictions)
-    auc = roc_auc_score(y_test, predictions)
-    # print results
-    print_results(accuracy, precision, recall, f1, auc)
-
-    pd.DataFrame({&#34;Accuracy&#34;: [accuracy], &#34;Precision&#34;: [precision], &#34;Recall&#34;: [recall], &#34;F1&#34;: [f1], &#34;AUC&#34;: [auc]})
-
-    plot_confusion_matrix(logreg, x_test, y_test)
-
-    return None</code></pre>
-</details>
-</dd>
-<dt id="src.models.pipeline_RF.run_random_forest"><code class="name flex">
-<span>def <span class="ident">run_random_forest</span></span>(<span>x_train, x_test, y_train, y_test, features)</span>
-</code></dt>
-<dd>
-<div class="desc"><p>Run Training algorithm of random forest model
-and evaluate result based on test data</p>
-<h2 id="args">Args</h2>
-<dl>
-<dt><strong><code>x_train</code></strong> :&ensp;<code>np.array</code></dt>
-<dd>
-<pre><code>training input
-</code></pre>
-</dd>
-<dt><strong><code>x_test</code></strong> :&ensp;<code>pd.DataFrame</code></dt>
-<dd>
-<p>test input</p>
-</dd>
-<dt><strong><code>y_train</code></strong> :&ensp;<code>pd.Series</code></dt>
-<dd>
-<p>training output</p>
-</dd>
-<dt><strong><code>y_test</code></strong> :&ensp;<code>pd.Series</code></dt>
-<dd>
-<pre><code>test output
-</code></pre>
-</dd>
-<dt><strong><code>features</code></strong> :&ensp;<code>pd.DataFrame</code></dt>
-<dd>original training input, used for feature names</dd>
+<dt><strong><code>X_train</code></strong></dt>
+<dd>The training dataset</dd>
+<dt><strong><code>y_train</code></strong></dt>
+<dd>The true labels</dd>
+<dt><strong><code>classification</code></strong></dt>
+<dd>classification task -&gt; logistic regression or regression task -&gt; linear model</dd>
+<dt><strong><code>verbose</code></strong></dt>
+<dd>amount of verbosity, default = 1 </dd>
 </dl>
 <h2 id="returns">Returns</h2>
-<p>returns rf model if no test data is specified,
-else returns None</p></div>
+<p>Returns fitted model</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def run_random_forest(x_train, x_test, y_train, y_test, features):
+<pre><code class="python">def run_random_forest(X_train, y_train, 
+                            classification: bool = True, verbose = 1,
+                            **kwargs):
     &#34;&#34;&#34;
-    Run Training algorithm of random forest model
-    and evaluate result based on test data
-
-    Args:
-        x_train (np.array):         training input
-        x_test (pd.DataFrame):      test input
-        y_train (pd.Series):        training output
-        y_test (pd.Series):         test output
-        features (pd.DataFrame):    original training input, used for feature names
-
-    Returns:
-        returns rf model if no test data is specified,
-        else returns None
+  Function that fits a random forest model. 
+  See also https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html and https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html
+  
+  Args:
+        X_train: The training dataset
+        y_train: The true labels
+        classification: classification task -&gt; logistic regression or regression task -&gt; linear model
+        verbose: amount of verbosity, default = 1 
+        
+  Returns:
+        Returns fitted model
     &#34;&#34;&#34;
 
-    # run model
-    rf = RandomForestClassifier(n_estimators=500, random_state=42)
-    rf.fit(x_train, np.ravel(y_train))
+    assert isinstance(X_train, pd.DataFrame), &#34;provided X_train is no pd.DataFrame&#34;
+    assert isinstance(y_train, pd.Series), &#34;provided y_train is no pd.Series&#34;
 
-    if x_test is None:
-        # skip evaluation and pass trained model
-        return rf
 
-    # visualization
-    # extract feature importance array
-    feature_imp = pd.Series(rf.feature_importances_, index=features.columns).sort_values(ascending=False)
-    feature_imp = feature_imp[:10]
+    if classification:
+    
+      model = RandomForestClassifier(verbose = verbose, **kwargs)
+    
+    else:
 
-    # plot feature importance
-    sns.barplot(x=feature_imp, y=feature_imp.index)
-    # Add labels to your graph
-    plt.xlabel(&#39;Feature Importance Score&#39;)
-    plt.ylabel(&#39;Features&#39;)
-    plt.title(&#34;Visualizing Important Features&#34;)
-    plt.legend()
-    plt.show()
+      model = RandomForestRegressor(verbose = verbose, **kwargs)
+    
 
-    # Evaluation
-    predictions = rf.predict(x_test)
-    accuracy = accuracy_score(y_test, predictions)
-    precision = precision_score(y_test, predictions)
-    recall = recall_score(y_test, predictions)
-    f1 = f1_score(y_test, predictions)
-    auc = roc_auc_score(y_test, predictions)
-    # print results
-    print_results(accuracy, precision, recall, f1, auc)
+    fit_model = model.fit(X_train, y_train)
 
-    pd.DataFrame({&#34;Accuracy&#34;: [accuracy], &#34;Precision&#34;: [precision], &#34;Recall&#34;: [recall], &#34;F1&#34;: [f1], &#34;AUC&#34;: [auc]})
-    plot_confusion_matrix(rf, x_test, y_test)
-    importances = list(rf.feature_importances_)
-    feature_list = list(features.columns)
-    feature_importances = [(feature, round(importance, 10)) for feature, importance in zip(feature_list, importances)]
-    feature_importances = sorted(feature_importances, key=lambda x: x[1], reverse=True)
-    # Print out the feature and importances
-    [print(&#39;Variable: {:20} Importance: {}&#39;.format(*pair)) for pair in feature_importances[:10]]
-
-    return None</code></pre>
+    return fit_model  </code></pre>
 </details>
 </dd>
 </dl>
@@ -625,17 +149,12 @@ else returns None</p></div>
 <ul id="index">
 <li><h3>Super-module</h3>
 <ul>
-<li><code><a title="src.models" href="index.html">src.models</a></code></li>
+<li><code><a title="connectome.models" href="index.html">connectome.models</a></code></li>
 </ul>
 </li>
 <li><h3><a href="#header-functions">Functions</a></h3>
 <ul class="">
-<li><code><a title="src.models.pipeline_RF.pca_pipeline_test" href="#src.models.pipeline_RF.pca_pipeline_test">pca_pipeline_test</a></code></li>
-<li><code><a title="src.models.pipeline_RF.preprocess_random_forest" href="#src.models.pipeline_RF.preprocess_random_forest">preprocess_random_forest</a></code></li>
-<li><code><a title="src.models.pipeline_RF.print_results" href="#src.models.pipeline_RF.print_results">print_results</a></code></li>
-<li><code><a title="src.models.pipeline_RF.read_data_file" href="#src.models.pipeline_RF.read_data_file">read_data_file</a></code></li>
-<li><code><a title="src.models.pipeline_RF.run_lin_regression" href="#src.models.pipeline_RF.run_lin_regression">run_lin_regression</a></code></li>
-<li><code><a title="src.models.pipeline_RF.run_random_forest" href="#src.models.pipeline_RF.run_random_forest">run_random_forest</a></code></li>
+<li><code><a title="connectome.models.pipeline_RF.run_random_forest" href="#connectome.models.pipeline_RF.run_random_forest">run_random_forest</a></code></li>
 </ul>
 </li>
 </ul>
