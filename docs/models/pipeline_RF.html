@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>connectome.models.pipeline_RF API documentation</title>
-<meta name="description" content="Run Random Forest" />
+<meta name="description" content="function to create and compute a random forest classification or regression model" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,7 +22,7 @@
 <h1 class="title">Module <code>connectome.models.pipeline_RF</code></h1>
 </header>
 <section id="section-intro">
-<p>Run Random Forest</p>
+<p>function to create and compute a random forest classification or regression model</p>
 </section>
 <section>
 </section>
@@ -36,9 +36,10 @@
 </code></dt>
 <dd>
 <div class="desc"><p>Function that fits a random forest model.
-See also <a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html">https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html</a> and <a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html">https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html</a> for further arguments that can be specified.</p>
+See also <a href="https://bit.ly/3Jj6fta">https://bit.ly/3Jj6fta</a> and <a href="https://bit.ly/3CNSUXr">https://bit.ly/3CNSUXr</a> for
+further arguments that can be specified.</p>
 <p>Examples:</p>
-<pre><code class="language-python-repl">&gt;&gt;&gt; model = run_random_forest(X_train = X_train,
+<pre><code class="language-python-repl">&gt;&gt;&gt; rf = run_random_forest(X_train = X_train,
                               y_train = y_train,
                               classification = True)   
 </code></pre>
@@ -49,7 +50,7 @@ See also <a href="https://scikit-learn.org/stable/modules/generated/sklearn.ense
 <dt><strong><code>y_train</code></strong></dt>
 <dd>The true labels</dd>
 <dt><strong><code>classification</code></strong></dt>
-<dd>classification task -&gt; logistic regression or regression task -&gt; linear model</dd>
+<dd>classification or regression task</dd>
 <dt><strong><code>verbose</code></strong></dt>
 <dd>amount of verbosity, default = 0 </dd>
 </dl>

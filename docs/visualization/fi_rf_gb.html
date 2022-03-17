@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>connectome.visualization.fi_rf_gb API documentation</title>
-<meta name="description" content="contains functions to compute / obtain the basic feature importances and permutation
+<meta name="description" content="functions to compute / obtain the basic feature importances and permutation
 feature importances from gradient boosting and random forest models" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
@@ -23,7 +23,7 @@ feature importances from gradient boosting and random forest models" />
 <h1 class="title">Module <code>connectome.visualization.fi_rf_gb</code></h1>
 </header>
 <section id="section-intro">
-<p>contains functions to compute / obtain the basic feature importances and permutation
+<p>functions to compute / obtain the basic feature importances and permutation
 feature importances from gradient boosting and random forest models</p>
 </section>
 <section>
@@ -101,7 +101,8 @@ feature importances from gradient boosting and random forest models</p>
 <dd>lgb or RF model of which the PFIs should be obtained</dd>
 <dt><strong><code>x_val</code></strong></dt>
 <dd>DataFrame or array containing features of held out data</dd>
-<dt>y_val target variable for held out data</dt>
+<dt><strong><code>y_val</code></strong></dt>
+<dd>target variable for held out data</dd>
 <dt><strong><code>feature_names</code></strong></dt>
 <dd>in case data is not in form of a pd.DataFrame</dd>
 <dt><strong><code>n</code></strong></dt>

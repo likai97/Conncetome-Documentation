@@ -39,14 +39,9 @@ brain atlases and regions</p>
 <dd>
 <div class="desc"><p>takes a list of colnames in the brainnetome format/naming and converts them to yeo_7 regions</p>
 <p>Examples:</p>
-<blockquote>
-<blockquote>
-<blockquote>
-<p>print(colnames_to_yeo_7(["108_110", "1_2", "200_218", "148_140"]))
-print(colnames_to_yeo_7(["108_110", "1_2", "200_218", "148_140"], order=False))</p>
-</blockquote>
-</blockquote>
-</blockquote>
+<pre><code class="language-python-repl">&gt;&gt;&gt; print(colnames_to_yeo_7([&quot;108_110&quot;, &quot;1_2&quot;, &quot;200_218&quot;, &quot;148_140&quot;]))
+&gt;&gt;&gt; print(colnames_to_yeo_7([&quot;108_110&quot;, &quot;1_2&quot;, &quot;200_218&quot;, &quot;148_140&quot;], order=False))
+</code></pre>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>colnames</code></strong></dt>
@@ -54,8 +49,8 @@ print(colnames_to_yeo_7(["108_110", "1_2", "200_218", "148_140"], order=False))<
 <dt><strong><code>order</code></strong></dt>
 <dd>whether the resulting colnames should be ordered</dd>
 </dl>
-<p>Return:
-list of yeo_7 converted colnames</p></div>
+<h2 id="returns">Returns</h2>
+<p>list of yeo_7 converted colnames</p></div>
 </dd>
 <dt id="connectome.preprocessing.colnames_to_yeo7.get_colnames_df"><code class="name flex">
 <span>def <span class="ident">get_colnames_df</span></span>(<span>df: bool = True) ‑> Union[pandas.core.frame.DataFrame, dict]</span>
@@ -64,14 +59,9 @@ list of yeo_7 converted colnames</p></div>
 <div class="desc"><p>generates a DataFrame or Dictionary which maps from the brainnetome (246x246)
 connectivity column names to the yeo_7 network column names</p>
 <p>Examples:</p>
-<blockquote>
-<blockquote>
-<blockquote>
-<p>print(get_colnames_df())
-print(get_colnames_df(False))</p>
-</blockquote>
-</blockquote>
-</blockquote>
+<pre><code class="language-python-repl">&gt;&gt;&gt; print(get_colnames_df())
+&gt;&gt;&gt; print(get_colnames_df(False))
+</code></pre>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>df</code></strong></dt>

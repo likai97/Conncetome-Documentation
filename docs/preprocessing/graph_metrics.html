@@ -46,30 +46,23 @@ on the bct(py) package</p>
 <div class="desc"><p>computes the graph metrics for connectivity data supplied in the form
 of a DataFrame</p>
 <p>Examples:</p>
-<blockquote>
-<blockquote>
-<blockquote>
-<p>import numpy as np
-import pandas as pd
-from connectome.preprocessing.graph_metrics import get_gms_from_pd</p>
-<h1 id="checking-the-get_gms_from_pd-function">checking the get_gms_from_pd function</h1>
-<p>k = 8
-# dim of the conn matrix
-obs = 10
-# observations
-conn = pd.DataFrame(</p>
-</blockquote>
-</blockquote>
-</blockquote>
-<pre><code class="language-python-repl">&gt;&gt;&gt;    np.random.normal(
-&gt;&gt;&gt;        loc=0.1,
-&gt;&gt;&gt;        scale=1.2,
-&gt;&gt;&gt;        size=int((k*(k-1)/2)*obs)).reshape(obs, int((k*(k-1)/2))),
-&gt;&gt;&gt;        columns=[str(i) + &quot;_&quot; + str(j)
-&gt;&gt;&gt;                 for i in range(k)
-&gt;&gt;&gt;                 for j in range(i+1, k)])
-&gt;&gt;&gt;conn_data_list = [flat_to_mat(conn.iloc[i, :]) for i in range(obs)]
-&gt;&gt;&gt;print(get_gms_from_pd(conn, list(conn.columns)))
+<pre><code class="language-python-repl">&gt;&gt;&gt; import numpy as np
+&gt;&gt;&gt; import pandas as pd
+&gt;&gt;&gt; from connectome.preprocessing.graph_metrics import get_gms_from_pd
+&gt;&gt;&gt;
+&gt;&gt;&gt; # checking the get_gms_from_pd function
+&gt;&gt;&gt; k = 8  # dim of the conn matrix
+&gt;&gt;&gt; obs = 10  # observations
+&gt;&gt;&gt; conn = pd.DataFrame(
+&gt;&gt;&gt;     np.random.normal(
+&gt;&gt;&gt;         loc=0.1,
+&gt;&gt;&gt;         scale=1.2,
+&gt;&gt;&gt;         size=int((k*(k-1)/2)*obs)).reshape(obs, int((k*(k-1)/2))),
+&gt;&gt;&gt;         columns=[str(i) + &quot;_&quot; + str(j)
+&gt;&gt;&gt;                  for i in range(k)
+&gt;&gt;&gt;                  for j in range(i+1, k)])
+&gt;&gt;&gt; conn_data_list = [flat_to_mat(conn.iloc[i, :]) for i in range(obs)]
+&gt;&gt;&gt; print(get_gms_from_pd(conn, list(conn.columns)))
 </code></pre>
 <h2 id="args">Args</h2>
 <dl>
@@ -95,32 +88,25 @@ conn = pd.DataFrame(</p>
 <p>retransforms the connectivity matrices to pearson correlation before
 computing the adjacency matrices</p>
 <p>Examples:</p>
-<blockquote>
-<blockquote>
-<blockquote>
-<p>import numpy as np
-import pandas as pd
-from connectome.preprocessing.graph_metrics import get_graph_metrics</p>
-<h1 id="checking-the-get_gms_from_pd-function">checking the get_gms_from_pd function</h1>
-<p>k = 8
-# dim of the conn matrix
-obs = 10
-# observations
-conn = pd.DataFrame(</p>
-</blockquote>
-</blockquote>
-</blockquote>
 </li>
 </ul>
-<pre><code class="language-python-repl">&gt;&gt;&gt;    np.random.normal(
-&gt;&gt;&gt;       loc=0.1,
-&gt;&gt;&gt;        scale=1.2,
-&gt;&gt;&gt;        size=int((k*(k-1)/2)*obs)).reshape(obs, int((k*(k-1)/2))),
-&gt;&gt;&gt;        columns=[str(i) + &quot;_&quot; + str(j)
-&gt;&gt;&gt;                 for i in range(k)
-&gt;&gt;&gt;                 for j in range(i+1, k)])
-&gt;&gt;&gt;conn_data_list = [flat_to_mat(conn.iloc[i, :]) for i in range(obs)]
-&gt;&gt;&gt;print(get_graph_metrics(conn_data_list))
+<pre><code class="language-python-repl">&gt;&gt;&gt; import numpy as np
+&gt;&gt;&gt; import pandas as pd
+&gt;&gt;&gt; from connectome.preprocessing.graph_metrics import get_graph_metrics
+&gt;&gt;&gt;
+&gt;&gt;&gt; # checking the get_gms_from_pd function
+&gt;&gt;&gt; k = 8  # dim of the conn matrix
+&gt;&gt;&gt; obs = 10  # observations
+&gt;&gt;&gt; conn = pd.DataFrame(
+&gt;&gt;&gt;     np.random.normal(
+&gt;&gt;&gt;        loc=0.1,
+&gt;&gt;&gt;         scale=1.2,
+&gt;&gt;&gt;         size=int((k*(k-1)/2)*obs)).reshape(obs, int((k*(k-1)/2))),
+&gt;&gt;&gt;         columns=[str(i) + &quot;_&quot; + str(j)
+&gt;&gt;&gt;                  for i in range(k)
+&gt;&gt;&gt;                  for j in range(i+1, k)])
+&gt;&gt;&gt; conn_data_list = [flat_to_mat(conn.iloc[i, :]) for i in range(obs)]
+&gt;&gt;&gt; print(get_graph_metrics(conn_data_list))
 </code></pre>
 <h2 id="args">Args</h2>
 <dl>
@@ -151,14 +137,9 @@ IMPORTANT: refers to the regions - e.g. "1", "4" instead of "1_4", "1_5"</dd>
 connectivity data columns, i.e. "1_245", which refers to the connectivity
 between region 1 and region 245</p>
 <p>Examples:</p>
-<blockquote>
-<blockquote>
-<blockquote>
-<p>test_names = ["1_2", "asf", "as_asd"]
-print([is_conn_col(x) for x in test_names])</p>
-</blockquote>
-</blockquote>
-</blockquote>
+<pre><code class="language-python-repl">&gt;&gt;&gt; test_names = [&quot;1_2&quot;, &quot;asf&quot;, &quot;as_asd&quot;]
+&gt;&gt;&gt; print([is_conn_col(x) for x in test_names])
+</code></pre>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>x</code></strong></dt>
