@@ -25,239 +25,6 @@ model at hand - implemented for gradient boosting models …" />
 <section id="section-intro">
 <p>this module contains a wrapper to compute and visualize the SHAP values for the given
 model at hand - implemented for gradient boosting models (lightgbm) so far</p>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">&#34;&#34;&#34;
-this module contains a wrapper to compute and visualize the SHAP values for the given
-model at hand - implemented for gradient boosting models (lightgbm) so far
-&#34;&#34;&#34;
-
-from typing import Union
-import shap
-from lightgbm import LGBMModel, LGBMClassifier, LGBMRegressor
-import pandas as pd
-import numpy as np
-from sklearn.datasets import make_classification, make_regression
-from connectome.models.lgb import GB
-
-
-class ShapleyLGB:
-    &#34;&#34;&#34;
-    wrapper to use/compute and visualise shapley values
-    for a given lgb model
-
-    Examples:
-    &gt;&gt;&gt; from connectome.visualization.lgb_shapley import ShapleyLGB
-    &gt;&gt;&gt; from sklearn.datasets import make_classification
-    &gt;&gt;&gt; import pandas as pd
-    &gt;&gt;&gt; from lightgbm import LGBMClassifier
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; # initialize model
-    &gt;&gt;&gt; lgb_class = LGBMClassifier()
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; # create synthetic data
-    &gt;&gt;&gt; X, y = make_classification(n_informative=10)
-    &gt;&gt;&gt; X = pd.DataFrame(X, columns=[&#34;feature_&#34; + str(i) for i in range(X.shape[1])])
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; # fit the model
-    &gt;&gt;&gt; lgb_class.fit(X, y)
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; # shapley values and analysis for the classification case
-    &gt;&gt;&gt; sh_class = ShapleyLGB(lgb_class, X)
-    &gt;&gt;&gt; sh_class.summ_plot(5)
-    &gt;&gt;&gt; class_imp = sh_class.shapley_importance()
-    &gt;&gt;&gt; print(class_imp)
-    &gt;&gt;&gt; sh_class.depend_plot(class_imp.iloc[0, 2])
-    &#34;&#34;&#34;
-    def __init__(self,
-                 model: Union[LGBMModel, GB],
-                 data: pd.DataFrame):
-        self.model = model.lgbm if isinstance(model, GB) else model
-        self.data = data
-        self.feature_names = data.columns
-        if isinstance(model, LGBMClassifier):
-            self.explainer = shap.TreeExplainer(
-                model.lgbm if isinstance(model, GB) else model,
-                data=data,
-                model_output=&#39;probability&#39;)
-        else:
-            self.explainer = shap.TreeExplainer(
-                model.lgbm if isinstance(model, GB) else model,
-                data=data)
-
-        self.shap_values = self.explainer.shap_values(self.data)
-        self.abs_shap_values = np.sum(np.abs(self.shap_values), axis=0)
-
-    def plot_single_prediction(self,
-                               ind: int
-                               ) -&gt; shap.plots._force.AdditiveForceVisualizer:
-        &#34;&#34;&#34;
-        visualises the computed shapley values for a single observation
-        Args:
-            ind: index of the observation / row
-
-        Returns:
-            plot of the shapley values
-
-        &#34;&#34;&#34;
-        shap.initjs()
-        return shap.force_plot(self.explainer.expected_value,
-                               self.shap_values[ind, :],
-                               self.data.iloc[ind, :])
-
-    def get_shapley_values(self) -&gt; np.ndarray:
-        &#34;&#34;&#34;
-        returns the computed shapley values as a numpy array
-        Returns:
-            numpy array containing the shapley values
-
-        &#34;&#34;&#34;
-        return self.shap_values
-
-    def get_shapley_values_df(self) -&gt; pd.DataFrame:
-        &#34;&#34;&#34;
-        returns the computed shapley values as a DataFrame
-        Returns:
-            DataFrame containing the shapley values
-
-        &#34;&#34;&#34;
-        return pd.DataFrame(self.shap_values,
-                            columns=self.feature_names)
-
-    def explain_prediction(self,
-                           ind: int) -&gt; pd.DataFrame:
-        &#34;&#34;&#34;
-        returns the computed shapley values for a given observation
-        Args:
-            ind: index of the observation / row
-
-        Returns:
-            dataframe containing the feature names and associated shapley values
-            for the chosen observation
-
-        &#34;&#34;&#34;
-        return pd.DataFrame({
-            &#34;features&#34;: self.feature_names,
-            &#34;shapley_values&#34;: self.shap_values[ind, :]
-        })
-
-    def depend_plot(self,
-                    feature_ind: int) -&gt; None:
-        &#34;&#34;&#34;
-        visualises the dependence plot for the selected feature
-        Args:
-            feature_ind: index of the feature/column
-
-        Returns:
-            None
-        &#34;&#34;&#34;
-        shap.dependence_plot(feature_ind,
-                             self.shap_values,
-                             self.data,
-                             self.feature_names)
-
-    def summ_plot(self,
-                  max_features: int = 25) -&gt; None:
-        &#34;&#34;&#34;
-        visualises the shapley values depending on the values of the
-        respective features
-        Args:
-            max_features: number of features to display
-
-        Returns:
-            None
-
-        &#34;&#34;&#34;
-        shap.summary_plot(self.shap_values,
-                          self.data,
-                          max_display=max_features)
-
-    def shapley_importance(self,
-                           n: int = 10):
-        &#34;&#34;&#34;
-        returns the n most important features based on the sum of the absolute
-        value of the shapley values
-        Args:
-            n: the n most important features to return
-
-        Returns:
-            DataFrame of the n most important features - including shapley values
-            and the index of the respective column
-
-        &#34;&#34;&#34;
-        sh_imp = pd.DataFrame({&#34;features&#34;: self.feature_names,
-                               &#34;sum_abs_shapley&#34;: self.abs_shap_values,
-                               &#34;feature_index&#34;:
-                                   [i for i in range(len(self.feature_names))]})
-
-        self.n_import = sh_imp.sort_values(
-            by=&#34;sum_abs_shapley&#34;,
-            ascending=False).iloc[:n, :].copy().reset_index(drop=True)
-
-        return self.n_import
-
-    def plot_n_imp(self,
-                   n: int = 10) -&gt; None:
-        &#34;&#34;&#34;
-        plots the dependence plots for the n most important features
-        (based on the sum of the absolute shapley values)
-        Args:
-            n: the n most important features to return
-
-        Returns:
-
-        &#34;&#34;&#34;
-        self.shapley_importance(n)
-
-        for i in self.n_import[&#34;feature_index&#34;]:
-            self.depend_plot(i)
-
-
-if __name__ == &#34;__main__&#34;:
-    # initialize some models
-    lgb_class = LGBMClassifier()
-    lgb_regr = LGBMRegressor()
-
-    # create synthetic data
-    X, y = make_classification(n_informative=10)
-    X = pd.DataFrame(
-        X,
-        columns=[&#34;feature_&#34; + str(i)
-                 for i in range(X.shape[1])])
-    X_regr, y_regr = make_regression(n_informative=15)
-    X_regr = pd.DataFrame(
-        X_regr,
-        columns=[&#34;feature_&#34; + str(i)
-                 for i in range(X_regr.shape[1])])
-
-    o_lgb_class = GB(X, y, classification=True, fit_directly=True)
-
-    # fit the models
-    lgb_class.fit(X, y)
-    lgb_regr.fit(X_regr, y_regr)
-
-    # shapley values and analysis for the classification case
-    sh_class = ShapleyLGB(lgb_class, X)
-    sh_class.summ_plot(5)
-    class_imp = sh_class.shapley_importance()
-    print(class_imp)
-    sh_class.depend_plot(class_imp.iloc[0, 2])
-
-    sh_regr = ShapleyLGB(lgb_regr, X_regr)
-    sh_regr.summ_plot(5)
-    regr_imp = sh_regr.shapley_importance()
-    print(regr_imp)
-    sh_regr.depend_plot(regr_imp.iloc[0, 2])
-
-    # shapley values for the GB class
-    sh_class = ShapleyLGB(o_lgb_class, X)
-    sh_class.summ_plot(5)
-    class_imp = sh_class.shapley_importance()
-    print(class_imp)
-    sh_class.depend_plot(class_imp.iloc[0, 2])</code></pre>
-</details>
 </section>
 <section>
 </section>
@@ -298,181 +65,6 @@ for a given lgb model</p>
 &gt;&gt;&gt; print(class_imp)
 &gt;&gt;&gt; sh_class.depend_plot(class_imp.iloc[0, 2])
 </code></pre></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class ShapleyLGB:
-    &#34;&#34;&#34;
-    wrapper to use/compute and visualise shapley values
-    for a given lgb model
-
-    Examples:
-    &gt;&gt;&gt; from connectome.visualization.lgb_shapley import ShapleyLGB
-    &gt;&gt;&gt; from sklearn.datasets import make_classification
-    &gt;&gt;&gt; import pandas as pd
-    &gt;&gt;&gt; from lightgbm import LGBMClassifier
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; # initialize model
-    &gt;&gt;&gt; lgb_class = LGBMClassifier()
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; # create synthetic data
-    &gt;&gt;&gt; X, y = make_classification(n_informative=10)
-    &gt;&gt;&gt; X = pd.DataFrame(X, columns=[&#34;feature_&#34; + str(i) for i in range(X.shape[1])])
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; # fit the model
-    &gt;&gt;&gt; lgb_class.fit(X, y)
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; # shapley values and analysis for the classification case
-    &gt;&gt;&gt; sh_class = ShapleyLGB(lgb_class, X)
-    &gt;&gt;&gt; sh_class.summ_plot(5)
-    &gt;&gt;&gt; class_imp = sh_class.shapley_importance()
-    &gt;&gt;&gt; print(class_imp)
-    &gt;&gt;&gt; sh_class.depend_plot(class_imp.iloc[0, 2])
-    &#34;&#34;&#34;
-    def __init__(self,
-                 model: Union[LGBMModel, GB],
-                 data: pd.DataFrame):
-        self.model = model.lgbm if isinstance(model, GB) else model
-        self.data = data
-        self.feature_names = data.columns
-        if isinstance(model, LGBMClassifier):
-            self.explainer = shap.TreeExplainer(
-                model.lgbm if isinstance(model, GB) else model,
-                data=data,
-                model_output=&#39;probability&#39;)
-        else:
-            self.explainer = shap.TreeExplainer(
-                model.lgbm if isinstance(model, GB) else model,
-                data=data)
-
-        self.shap_values = self.explainer.shap_values(self.data)
-        self.abs_shap_values = np.sum(np.abs(self.shap_values), axis=0)
-
-    def plot_single_prediction(self,
-                               ind: int
-                               ) -&gt; shap.plots._force.AdditiveForceVisualizer:
-        &#34;&#34;&#34;
-        visualises the computed shapley values for a single observation
-        Args:
-            ind: index of the observation / row
-
-        Returns:
-            plot of the shapley values
-
-        &#34;&#34;&#34;
-        shap.initjs()
-        return shap.force_plot(self.explainer.expected_value,
-                               self.shap_values[ind, :],
-                               self.data.iloc[ind, :])
-
-    def get_shapley_values(self) -&gt; np.ndarray:
-        &#34;&#34;&#34;
-        returns the computed shapley values as a numpy array
-        Returns:
-            numpy array containing the shapley values
-
-        &#34;&#34;&#34;
-        return self.shap_values
-
-    def get_shapley_values_df(self) -&gt; pd.DataFrame:
-        &#34;&#34;&#34;
-        returns the computed shapley values as a DataFrame
-        Returns:
-            DataFrame containing the shapley values
-
-        &#34;&#34;&#34;
-        return pd.DataFrame(self.shap_values,
-                            columns=self.feature_names)
-
-    def explain_prediction(self,
-                           ind: int) -&gt; pd.DataFrame:
-        &#34;&#34;&#34;
-        returns the computed shapley values for a given observation
-        Args:
-            ind: index of the observation / row
-
-        Returns:
-            dataframe containing the feature names and associated shapley values
-            for the chosen observation
-
-        &#34;&#34;&#34;
-        return pd.DataFrame({
-            &#34;features&#34;: self.feature_names,
-            &#34;shapley_values&#34;: self.shap_values[ind, :]
-        })
-
-    def depend_plot(self,
-                    feature_ind: int) -&gt; None:
-        &#34;&#34;&#34;
-        visualises the dependence plot for the selected feature
-        Args:
-            feature_ind: index of the feature/column
-
-        Returns:
-            None
-        &#34;&#34;&#34;
-        shap.dependence_plot(feature_ind,
-                             self.shap_values,
-                             self.data,
-                             self.feature_names)
-
-    def summ_plot(self,
-                  max_features: int = 25) -&gt; None:
-        &#34;&#34;&#34;
-        visualises the shapley values depending on the values of the
-        respective features
-        Args:
-            max_features: number of features to display
-
-        Returns:
-            None
-
-        &#34;&#34;&#34;
-        shap.summary_plot(self.shap_values,
-                          self.data,
-                          max_display=max_features)
-
-    def shapley_importance(self,
-                           n: int = 10):
-        &#34;&#34;&#34;
-        returns the n most important features based on the sum of the absolute
-        value of the shapley values
-        Args:
-            n: the n most important features to return
-
-        Returns:
-            DataFrame of the n most important features - including shapley values
-            and the index of the respective column
-
-        &#34;&#34;&#34;
-        sh_imp = pd.DataFrame({&#34;features&#34;: self.feature_names,
-                               &#34;sum_abs_shapley&#34;: self.abs_shap_values,
-                               &#34;feature_index&#34;:
-                                   [i for i in range(len(self.feature_names))]})
-
-        self.n_import = sh_imp.sort_values(
-            by=&#34;sum_abs_shapley&#34;,
-            ascending=False).iloc[:n, :].copy().reset_index(drop=True)
-
-        return self.n_import
-
-    def plot_n_imp(self,
-                   n: int = 10) -&gt; None:
-        &#34;&#34;&#34;
-        plots the dependence plots for the n most important features
-        (based on the sum of the absolute shapley values)
-        Args:
-            n: the n most important features to return
-
-        Returns:
-
-        &#34;&#34;&#34;
-        self.shapley_importance(n)
-
-        for i in self.n_import[&#34;feature_index&#34;]:
-            self.depend_plot(i)</code></pre>
-</details>
 <h3>Methods</h3>
 <dl>
 <dt id="connectome.visualization.lgb_shapley.ShapleyLGB.depend_plot"><code class="name flex">
@@ -487,25 +79,6 @@ for a given lgb model</p>
 </dl>
 <h2 id="returns">Returns</h2>
 <p>None</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def depend_plot(self,
-                feature_ind: int) -&gt; None:
-    &#34;&#34;&#34;
-    visualises the dependence plot for the selected feature
-    Args:
-        feature_ind: index of the feature/column
-
-    Returns:
-        None
-    &#34;&#34;&#34;
-    shap.dependence_plot(feature_ind,
-                         self.shap_values,
-                         self.data,
-                         self.feature_names)</code></pre>
-</details>
 </dd>
 <dt id="connectome.visualization.lgb_shapley.ShapleyLGB.explain_prediction"><code class="name flex">
 <span>def <span class="ident">explain_prediction</span></span>(<span>self, ind: int) ‑> pandas.core.frame.DataFrame</span>
@@ -520,27 +93,6 @@ for a given lgb model</p>
 <h2 id="returns">Returns</h2>
 <p>dataframe containing the feature names and associated shapley values
 for the chosen observation</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def explain_prediction(self,
-                       ind: int) -&gt; pd.DataFrame:
-    &#34;&#34;&#34;
-    returns the computed shapley values for a given observation
-    Args:
-        ind: index of the observation / row
-
-    Returns:
-        dataframe containing the feature names and associated shapley values
-        for the chosen observation
-
-    &#34;&#34;&#34;
-    return pd.DataFrame({
-        &#34;features&#34;: self.feature_names,
-        &#34;shapley_values&#34;: self.shap_values[ind, :]
-    })</code></pre>
-</details>
 </dd>
 <dt id="connectome.visualization.lgb_shapley.ShapleyLGB.get_shapley_values"><code class="name flex">
 <span>def <span class="ident">get_shapley_values</span></span>(<span>self) ‑> numpy.ndarray</span>
@@ -549,19 +101,6 @@ for the chosen observation</p></div>
 <div class="desc"><p>returns the computed shapley values as a numpy array</p>
 <h2 id="returns">Returns</h2>
 <p>numpy array containing the shapley values</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_shapley_values(self) -&gt; np.ndarray:
-    &#34;&#34;&#34;
-    returns the computed shapley values as a numpy array
-    Returns:
-        numpy array containing the shapley values
-
-    &#34;&#34;&#34;
-    return self.shap_values</code></pre>
-</details>
 </dd>
 <dt id="connectome.visualization.lgb_shapley.ShapleyLGB.get_shapley_values_df"><code class="name flex">
 <span>def <span class="ident">get_shapley_values_df</span></span>(<span>self) ‑> pandas.core.frame.DataFrame</span>
@@ -570,20 +109,6 @@ for the chosen observation</p></div>
 <div class="desc"><p>returns the computed shapley values as a DataFrame</p>
 <h2 id="returns">Returns</h2>
 <p>DataFrame containing the shapley values</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_shapley_values_df(self) -&gt; pd.DataFrame:
-    &#34;&#34;&#34;
-    returns the computed shapley values as a DataFrame
-    Returns:
-        DataFrame containing the shapley values
-
-    &#34;&#34;&#34;
-    return pd.DataFrame(self.shap_values,
-                        columns=self.feature_names)</code></pre>
-</details>
 </dd>
 <dt id="connectome.visualization.lgb_shapley.ShapleyLGB.plot_n_imp"><code class="name flex">
 <span>def <span class="ident">plot_n_imp</span></span>(<span>self, n: int = 10) ‑> None</span>
@@ -597,26 +122,6 @@ for the chosen observation</p></div>
 <dd>the n most important features to return</dd>
 </dl>
 <p>Returns:</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def plot_n_imp(self,
-               n: int = 10) -&gt; None:
-    &#34;&#34;&#34;
-    plots the dependence plots for the n most important features
-    (based on the sum of the absolute shapley values)
-    Args:
-        n: the n most important features to return
-
-    Returns:
-
-    &#34;&#34;&#34;
-    self.shapley_importance(n)
-
-    for i in self.n_import[&#34;feature_index&#34;]:
-        self.depend_plot(i)</code></pre>
-</details>
 </dd>
 <dt id="connectome.visualization.lgb_shapley.ShapleyLGB.plot_single_prediction"><code class="name flex">
 <span>def <span class="ident">plot_single_prediction</span></span>(<span>self, ind: int) ‑> shap.plots._force.AdditiveForceVisualizer</span>
@@ -630,27 +135,6 @@ for the chosen observation</p></div>
 </dl>
 <h2 id="returns">Returns</h2>
 <p>plot of the shapley values</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def plot_single_prediction(self,
-                           ind: int
-                           ) -&gt; shap.plots._force.AdditiveForceVisualizer:
-    &#34;&#34;&#34;
-    visualises the computed shapley values for a single observation
-    Args:
-        ind: index of the observation / row
-
-    Returns:
-        plot of the shapley values
-
-    &#34;&#34;&#34;
-    shap.initjs()
-    return shap.force_plot(self.explainer.expected_value,
-                           self.shap_values[ind, :],
-                           self.data.iloc[ind, :])</code></pre>
-</details>
 </dd>
 <dt id="connectome.visualization.lgb_shapley.ShapleyLGB.shapley_importance"><code class="name flex">
 <span>def <span class="ident">shapley_importance</span></span>(<span>self, n: int = 10)</span>
@@ -666,34 +150,6 @@ value of the shapley values</p>
 <h2 id="returns">Returns</h2>
 <p>DataFrame of the n most important features - including shapley values
 and the index of the respective column</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def shapley_importance(self,
-                       n: int = 10):
-    &#34;&#34;&#34;
-    returns the n most important features based on the sum of the absolute
-    value of the shapley values
-    Args:
-        n: the n most important features to return
-
-    Returns:
-        DataFrame of the n most important features - including shapley values
-        and the index of the respective column
-
-    &#34;&#34;&#34;
-    sh_imp = pd.DataFrame({&#34;features&#34;: self.feature_names,
-                           &#34;sum_abs_shapley&#34;: self.abs_shap_values,
-                           &#34;feature_index&#34;:
-                               [i for i in range(len(self.feature_names))]})
-
-    self.n_import = sh_imp.sort_values(
-        by=&#34;sum_abs_shapley&#34;,
-        ascending=False).iloc[:n, :].copy().reset_index(drop=True)
-
-    return self.n_import</code></pre>
-</details>
 </dd>
 <dt id="connectome.visualization.lgb_shapley.ShapleyLGB.summ_plot"><code class="name flex">
 <span>def <span class="ident">summ_plot</span></span>(<span>self, max_features: int = 25) ‑> None</span>
@@ -708,26 +164,6 @@ respective features</p>
 </dl>
 <h2 id="returns">Returns</h2>
 <p>None</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def summ_plot(self,
-              max_features: int = 25) -&gt; None:
-    &#34;&#34;&#34;
-    visualises the shapley values depending on the values of the
-    respective features
-    Args:
-        max_features: number of features to display
-
-    Returns:
-        None
-
-    &#34;&#34;&#34;
-    shap.summary_plot(self.shap_values,
-                      self.data,
-                      max_display=max_features)</code></pre>
-</details>
 </dd>
 </dl>
 </dd>

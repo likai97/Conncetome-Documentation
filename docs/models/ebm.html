@@ -25,241 +25,6 @@ on the mutual information" />
 <section id="section-intro">
 <p>wrapper for the explainable boosting machine with integrated feature selection based
 on the mutual information</p>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">&#34;&#34;&#34;
-wrapper for the explainable boosting machine with integrated feature selection based
-on the mutual information
-&#34;&#34;&#34;
-import pandas as pd
-import numpy as np
-from sklearn.feature_selection import mutual_info_regression,\
-    mutual_info_classif
-from typing import Union
-from sklearn.datasets import make_classification, make_regression
-from interpret.glassbox import ExplainableBoostingRegressor, \
-    ExplainableBoostingClassifier
-from interpret import show
-import sys
-import pickle
-
-
-class EBMmi:
-    &#34;&#34;&#34;
-    Class that wraps the explainable boosting machine and performs feature selection
-    before fitting the model based on the mutual information scores of the features
-    with the target variable. The integrated feature selection step is necessary
-    as the explainable boosting machine is computationally very costly especially
-    in the case of high number of features.
-
-    Examples:
-    &gt;&gt;&gt; import numpy as np
-    &gt;&gt;&gt; import pandas as pd
-    &gt;&gt;&gt; # create synthetic data
-    &gt;&gt;&gt; X, y = make_classification(n_informative=15)
-    &gt;&gt;&gt; X = pd.DataFrame(
-    &gt;&gt;&gt;     X,
-    &gt;&gt;&gt;     columns=[&#34;feature_&#34; + str(i)
-    &gt;&gt;&gt;              for i in range(X.shape[1])])
-    &gt;&gt;&gt; X_regr, y_regr = make_regression(n_features=20, n_informative=15)
-    &gt;&gt;&gt; X_regr = pd.DataFrame(
-    &gt;&gt;&gt;     X_regr,
-    &gt;&gt;&gt;     columns=[&#34;feature_&#34; + str(i)
-    &gt;&gt;&gt;              for i in range(X_regr.shape[1])])
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; # initialize some models
-    &gt;&gt;&gt; ebm_class = EBMmi(X, y, classification=True)
-    &gt;&gt;&gt; ebm_regr = EBMmi(X_regr, y_regr, classification=False)
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; # check the size
-    &gt;&gt;&gt; print(sys.getsizeof(ebm_class)*1e-6)
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; # plot functions
-    &gt;&gt;&gt; ebm_class.plot_mi(n=5)
-    &gt;&gt;&gt; ebm_regr.plot_mi(n=5)
-    &#34;&#34;&#34;
-    def __init__(self,
-                 features: Union[np.ndarray, pd.DataFrame],
-                 target: np.ndarray,
-                 feature_names: list = None,
-                 classification: bool = True,
-                 fit_directly: bool = True,
-                 **kwargs
-                 ):
-
-        if isinstance(features, pd.DataFrame):
-            self.pddf = True
-            self.feature_names = features.columns
-        elif isinstance(features, np.ndarray):
-            self.pddf = False
-            if feature_names is None:
-                raise ValueError(&#34;if using numpy arrays, feature names must &#34;
-                                 &#34;be provided in a list&#34;)
-            self.feature_names = feature_names
-
-        self.features = features
-        self.target = target
-        self.classification = classification
-        self.mi = mutual_info_classif(features,
-                                      target) \
-            if classification \
-            else mutual_info_regression(
-            features, target)
-        self.mi_features = pd.DataFrame({
-            &#34;features&#34;: self.feature_names,
-            &#34;mutual_information&#34;: self.mi
-        }).sort_values(
-            by=&#34;mutual_information&#34;,
-            ascending=False)
-        self.ebm = ExplainableBoostingClassifier() \
-            if self.classification \
-            else ExplainableBoostingRegressor()
-        if fit_directly:
-            self.fit(**kwargs)
-
-    def fit(self,
-            n_features: int = 650,
-            return_model: bool = False):
-        if n_features &gt; len(self.feature_names):
-            n_features = len(self.feature_names)
-
-        self.get_selected_features(n_features)
-        if return_model:
-            return self.ebm.fit(self.x_mi, self.target)
-        else:
-            self.ebm = self.ebm.fit(self.x_mi, self.target)
-
-    def get_selected_features(self,
-                              n: int = 650
-                              ) -&gt; Union[pd.DataFrame, np.ndarray]:
-
-        self.sel_features = list(self.mi_features[&#34;features&#34;].iloc[:n])
-        cols = [col for col in self.feature_names if col in self.sel_features]
-
-        if not self.pddf:
-            indices = np.array([i for i, f in enumerate(self.feature_names)
-                                if f in cols])
-
-        self.x_mi = self.features.loc[:, cols].copy() \
-            if self.pddf \
-            else self.features[:, indices].copy()
-        return self.x_mi
-
-    def get_sel_features_names(self) -&gt; list:
-        return self.sel_features
-
-    def get_mutual_info(self) -&gt; pd.DataFrame:
-        return self.mi_features
-
-    def predict(self,
-                inputs: pd.DataFrame
-                ) -&gt; np.ndarray:
-
-        if not isinstance(inputs, pd.DataFrame):
-            raise ValueError(&#34;EBM needs a DataFrame as input&#34;)
-
-        sel_cols = [col for col in self.feature_names if col in self.sel_features]
-        input_data = inputs.loc[:, sel_cols].copy()
-
-        return self.ebm.predict(input_data)
-
-    def predict_proba(self,
-                      inputs) -&gt; np.ndarray:
-        if self.classification:
-            return self.ebm.predict_proba(inputs)[:, 1]
-        else:
-            raise ValueError(&#34;predict_proba not available for regression&#34;)
-
-    def plot_mi(self,
-                n: int = 30):
-        self.mi_features.iloc[:n, :].plot.bar(
-            x=&#34;features&#34;,
-            y=&#34;mutual_information&#34;)
-
-    def explain_global(self):
-        show(self.ebm.explain_global())
-
-    def explain_local(self,
-                      inputs: Union[np.ndarray,
-                                    pd.DataFrame],
-                      target: np.ndarray = None
-                      ) -&gt; None:
-
-        if inputs.shape[1] &gt; len(self.sel_features):
-            # has to be adjusted to also handle np.ndarrays
-            cols = [col for col in inputs.columns if col in self.sel_features]
-            inputs = inputs.loc[:, cols]
-
-        show(self.ebm.explain_local(inputs, target))
-
-    def get_contributions(self,
-                          inputs: Union[np.ndarray,
-                                        pd.DataFrame]
-                          ) -&gt; Union[np.ndarray, tuple]:
-
-        if self.classification:
-            res = self.ebm.predict_and_contrib(inputs)
-            return res[0][:, 1], res[1]
-        else:
-            return self.ebm.predict_and_contrib(inputs)
-
-    def save_model(self, name: str = &#34;ebm_trained&#34;):
-        with open(name, &#34;wb&#34;) as f:
-            pickle.dump(self, f)
-
-
-if __name__ == &#34;__main__&#34;:
-    # create synthetic data
-    X, y = make_classification(n_informative=15)
-    X = pd.DataFrame(
-        X,
-        columns=[&#34;feature_&#34; + str(i)
-                 for i in range(X.shape[1])])
-    X_regr, y_regr = make_regression(n_features=20, n_informative=15)
-    X_regr = pd.DataFrame(
-        X_regr,
-        columns=[&#34;feature_&#34; + str(i)
-                 for i in range(X_regr.shape[1])])
-
-    # initialize some models
-    ebm_class = EBMmi(X, y, classification=True, fit_directly=True)
-    ebm_regr = EBMmi(X_regr, y_regr, classification=False, fit_directly=True)
-
-    # fit the models
-    #ebm_class.fit()
-    #ebm_regr.fit()
-
-    # check the size
-    print(sys.getsizeof(ebm_class)*1e-6)
-
-    # plot functions
-    ebm_class.plot_mi(n=5)
-    ebm_regr.plot_mi(n=5)
-
-    # predict functions
-    pred_class = ebm_class.predict(X)
-    print(pred_class)
-    pred_regr = ebm_regr.predict(X_regr)
-    print(pred_regr)
-
-    # explain functions
-    #ebm_class.explain_global()
-    #ebm_regr.explain_global()
-
-    ebm_class.save_model(&#34;ebm&#34;)
-    # local explanations
-    #ebm_class.explain_local(X, y)
-    #ebm_regr.explain_local(X_regr, y_regr)
-    with open(&#34;ebm&#34;, &#34;rb&#34;) as input_file:
-        ebm_class_2 = pickle.load(input_file)
-
-    pred_class = ebm_class_2.predict(X)
-    print(pred_class)
-
-    os.remove(&#34;ebm&#34;)</code></pre>
-</details>
 </section>
 <section>
 </section>
@@ -306,173 +71,6 @@ in the case of high number of features.</p>
 &gt;&gt;&gt; ebm_class.plot_mi(n=5)
 &gt;&gt;&gt; ebm_regr.plot_mi(n=5)
 </code></pre></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class EBMmi:
-    &#34;&#34;&#34;
-    Class that wraps the explainable boosting machine and performs feature selection
-    before fitting the model based on the mutual information scores of the features
-    with the target variable. The integrated feature selection step is necessary
-    as the explainable boosting machine is computationally very costly especially
-    in the case of high number of features.
-
-    Examples:
-    &gt;&gt;&gt; import numpy as np
-    &gt;&gt;&gt; import pandas as pd
-    &gt;&gt;&gt; # create synthetic data
-    &gt;&gt;&gt; X, y = make_classification(n_informative=15)
-    &gt;&gt;&gt; X = pd.DataFrame(
-    &gt;&gt;&gt;     X,
-    &gt;&gt;&gt;     columns=[&#34;feature_&#34; + str(i)
-    &gt;&gt;&gt;              for i in range(X.shape[1])])
-    &gt;&gt;&gt; X_regr, y_regr = make_regression(n_features=20, n_informative=15)
-    &gt;&gt;&gt; X_regr = pd.DataFrame(
-    &gt;&gt;&gt;     X_regr,
-    &gt;&gt;&gt;     columns=[&#34;feature_&#34; + str(i)
-    &gt;&gt;&gt;              for i in range(X_regr.shape[1])])
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; # initialize some models
-    &gt;&gt;&gt; ebm_class = EBMmi(X, y, classification=True)
-    &gt;&gt;&gt; ebm_regr = EBMmi(X_regr, y_regr, classification=False)
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; # check the size
-    &gt;&gt;&gt; print(sys.getsizeof(ebm_class)*1e-6)
-    &gt;&gt;&gt;
-    &gt;&gt;&gt; # plot functions
-    &gt;&gt;&gt; ebm_class.plot_mi(n=5)
-    &gt;&gt;&gt; ebm_regr.plot_mi(n=5)
-    &#34;&#34;&#34;
-    def __init__(self,
-                 features: Union[np.ndarray, pd.DataFrame],
-                 target: np.ndarray,
-                 feature_names: list = None,
-                 classification: bool = True,
-                 fit_directly: bool = True,
-                 **kwargs
-                 ):
-
-        if isinstance(features, pd.DataFrame):
-            self.pddf = True
-            self.feature_names = features.columns
-        elif isinstance(features, np.ndarray):
-            self.pddf = False
-            if feature_names is None:
-                raise ValueError(&#34;if using numpy arrays, feature names must &#34;
-                                 &#34;be provided in a list&#34;)
-            self.feature_names = feature_names
-
-        self.features = features
-        self.target = target
-        self.classification = classification
-        self.mi = mutual_info_classif(features,
-                                      target) \
-            if classification \
-            else mutual_info_regression(
-            features, target)
-        self.mi_features = pd.DataFrame({
-            &#34;features&#34;: self.feature_names,
-            &#34;mutual_information&#34;: self.mi
-        }).sort_values(
-            by=&#34;mutual_information&#34;,
-            ascending=False)
-        self.ebm = ExplainableBoostingClassifier() \
-            if self.classification \
-            else ExplainableBoostingRegressor()
-        if fit_directly:
-            self.fit(**kwargs)
-
-    def fit(self,
-            n_features: int = 650,
-            return_model: bool = False):
-        if n_features &gt; len(self.feature_names):
-            n_features = len(self.feature_names)
-
-        self.get_selected_features(n_features)
-        if return_model:
-            return self.ebm.fit(self.x_mi, self.target)
-        else:
-            self.ebm = self.ebm.fit(self.x_mi, self.target)
-
-    def get_selected_features(self,
-                              n: int = 650
-                              ) -&gt; Union[pd.DataFrame, np.ndarray]:
-
-        self.sel_features = list(self.mi_features[&#34;features&#34;].iloc[:n])
-        cols = [col for col in self.feature_names if col in self.sel_features]
-
-        if not self.pddf:
-            indices = np.array([i for i, f in enumerate(self.feature_names)
-                                if f in cols])
-
-        self.x_mi = self.features.loc[:, cols].copy() \
-            if self.pddf \
-            else self.features[:, indices].copy()
-        return self.x_mi
-
-    def get_sel_features_names(self) -&gt; list:
-        return self.sel_features
-
-    def get_mutual_info(self) -&gt; pd.DataFrame:
-        return self.mi_features
-
-    def predict(self,
-                inputs: pd.DataFrame
-                ) -&gt; np.ndarray:
-
-        if not isinstance(inputs, pd.DataFrame):
-            raise ValueError(&#34;EBM needs a DataFrame as input&#34;)
-
-        sel_cols = [col for col in self.feature_names if col in self.sel_features]
-        input_data = inputs.loc[:, sel_cols].copy()
-
-        return self.ebm.predict(input_data)
-
-    def predict_proba(self,
-                      inputs) -&gt; np.ndarray:
-        if self.classification:
-            return self.ebm.predict_proba(inputs)[:, 1]
-        else:
-            raise ValueError(&#34;predict_proba not available for regression&#34;)
-
-    def plot_mi(self,
-                n: int = 30):
-        self.mi_features.iloc[:n, :].plot.bar(
-            x=&#34;features&#34;,
-            y=&#34;mutual_information&#34;)
-
-    def explain_global(self):
-        show(self.ebm.explain_global())
-
-    def explain_local(self,
-                      inputs: Union[np.ndarray,
-                                    pd.DataFrame],
-                      target: np.ndarray = None
-                      ) -&gt; None:
-
-        if inputs.shape[1] &gt; len(self.sel_features):
-            # has to be adjusted to also handle np.ndarrays
-            cols = [col for col in inputs.columns if col in self.sel_features]
-            inputs = inputs.loc[:, cols]
-
-        show(self.ebm.explain_local(inputs, target))
-
-    def get_contributions(self,
-                          inputs: Union[np.ndarray,
-                                        pd.DataFrame]
-                          ) -&gt; Union[np.ndarray, tuple]:
-
-        if self.classification:
-            res = self.ebm.predict_and_contrib(inputs)
-            return res[0][:, 1], res[1]
-        else:
-            return self.ebm.predict_and_contrib(inputs)
-
-    def save_model(self, name: str = &#34;ebm_trained&#34;):
-        with open(name, &#34;wb&#34;) as f:
-            pickle.dump(self, f)</code></pre>
-</details>
 <h3>Methods</h3>
 <dl>
 <dt id="connectome.models.ebm.EBMmi.explain_global"><code class="name flex">
@@ -480,200 +78,66 @@ in the case of high number of features.</p>
 </code></dt>
 <dd>
 <div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def explain_global(self):
-    show(self.ebm.explain_global())</code></pre>
-</details>
 </dd>
 <dt id="connectome.models.ebm.EBMmi.explain_local"><code class="name flex">
 <span>def <span class="ident">explain_local</span></span>(<span>self, inputs: Union[numpy.ndarray, pandas.core.frame.DataFrame], target: numpy.ndarray = None) ‑> None</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def explain_local(self,
-                  inputs: Union[np.ndarray,
-                                pd.DataFrame],
-                  target: np.ndarray = None
-                  ) -&gt; None:
-
-    if inputs.shape[1] &gt; len(self.sel_features):
-        # has to be adjusted to also handle np.ndarrays
-        cols = [col for col in inputs.columns if col in self.sel_features]
-        inputs = inputs.loc[:, cols]
-
-    show(self.ebm.explain_local(inputs, target))</code></pre>
-</details>
 </dd>
 <dt id="connectome.models.ebm.EBMmi.fit"><code class="name flex">
 <span>def <span class="ident">fit</span></span>(<span>self, n_features: int = 650, return_model: bool = False)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def fit(self,
-        n_features: int = 650,
-        return_model: bool = False):
-    if n_features &gt; len(self.feature_names):
-        n_features = len(self.feature_names)
-
-    self.get_selected_features(n_features)
-    if return_model:
-        return self.ebm.fit(self.x_mi, self.target)
-    else:
-        self.ebm = self.ebm.fit(self.x_mi, self.target)</code></pre>
-</details>
 </dd>
 <dt id="connectome.models.ebm.EBMmi.get_contributions"><code class="name flex">
 <span>def <span class="ident">get_contributions</span></span>(<span>self, inputs: Union[numpy.ndarray, pandas.core.frame.DataFrame]) ‑> Union[numpy.ndarray, tuple]</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_contributions(self,
-                      inputs: Union[np.ndarray,
-                                    pd.DataFrame]
-                      ) -&gt; Union[np.ndarray, tuple]:
-
-    if self.classification:
-        res = self.ebm.predict_and_contrib(inputs)
-        return res[0][:, 1], res[1]
-    else:
-        return self.ebm.predict_and_contrib(inputs)</code></pre>
-</details>
 </dd>
 <dt id="connectome.models.ebm.EBMmi.get_mutual_info"><code class="name flex">
 <span>def <span class="ident">get_mutual_info</span></span>(<span>self) ‑> pandas.core.frame.DataFrame</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_mutual_info(self) -&gt; pd.DataFrame:
-    return self.mi_features</code></pre>
-</details>
 </dd>
 <dt id="connectome.models.ebm.EBMmi.get_sel_features_names"><code class="name flex">
 <span>def <span class="ident">get_sel_features_names</span></span>(<span>self) ‑> list</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_sel_features_names(self) -&gt; list:
-    return self.sel_features</code></pre>
-</details>
 </dd>
 <dt id="connectome.models.ebm.EBMmi.get_selected_features"><code class="name flex">
 <span>def <span class="ident">get_selected_features</span></span>(<span>self, n: int = 650) ‑> Union[numpy.ndarray, pandas.core.frame.DataFrame]</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_selected_features(self,
-                          n: int = 650
-                          ) -&gt; Union[pd.DataFrame, np.ndarray]:
-
-    self.sel_features = list(self.mi_features[&#34;features&#34;].iloc[:n])
-    cols = [col for col in self.feature_names if col in self.sel_features]
-
-    if not self.pddf:
-        indices = np.array([i for i, f in enumerate(self.feature_names)
-                            if f in cols])
-
-    self.x_mi = self.features.loc[:, cols].copy() \
-        if self.pddf \
-        else self.features[:, indices].copy()
-    return self.x_mi</code></pre>
-</details>
 </dd>
 <dt id="connectome.models.ebm.EBMmi.plot_mi"><code class="name flex">
 <span>def <span class="ident">plot_mi</span></span>(<span>self, n: int = 30)</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def plot_mi(self,
-            n: int = 30):
-    self.mi_features.iloc[:n, :].plot.bar(
-        x=&#34;features&#34;,
-        y=&#34;mutual_information&#34;)</code></pre>
-</details>
 </dd>
 <dt id="connectome.models.ebm.EBMmi.predict"><code class="name flex">
 <span>def <span class="ident">predict</span></span>(<span>self, inputs: pandas.core.frame.DataFrame) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def predict(self,
-            inputs: pd.DataFrame
-            ) -&gt; np.ndarray:
-
-    if not isinstance(inputs, pd.DataFrame):
-        raise ValueError(&#34;EBM needs a DataFrame as input&#34;)
-
-    sel_cols = [col for col in self.feature_names if col in self.sel_features]
-    input_data = inputs.loc[:, sel_cols].copy()
-
-    return self.ebm.predict(input_data)</code></pre>
-</details>
 </dd>
 <dt id="connectome.models.ebm.EBMmi.predict_proba"><code class="name flex">
 <span>def <span class="ident">predict_proba</span></span>(<span>self, inputs) ‑> numpy.ndarray</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def predict_proba(self,
-                  inputs) -&gt; np.ndarray:
-    if self.classification:
-        return self.ebm.predict_proba(inputs)[:, 1]
-    else:
-        raise ValueError(&#34;predict_proba not available for regression&#34;)</code></pre>
-</details>
 </dd>
 <dt id="connectome.models.ebm.EBMmi.save_model"><code class="name flex">
 <span>def <span class="ident">save_model</span></span>(<span>self, name: str = 'ebm_trained')</span>
 </code></dt>
 <dd>
 <div class="desc"></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def save_model(self, name: str = &#34;ebm_trained&#34;):
-    with open(name, &#34;wb&#34;) as f:
-        pickle.dump(self, f)</code></pre>
-</details>
 </dd>
 </dl>
 </dd>

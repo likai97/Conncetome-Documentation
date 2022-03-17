@@ -23,72 +23,6 @@
 </header>
 <section id="section-intro">
 <p>Evaluation of fitted model on test data</p>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">&#34;&#34;&#34;
-Evaluation of fitted model on test data
-&#34;&#34;&#34;
-from sklearn.metrics import accuracy_score, roc_auc_score, precision_score, recall_score, f1_score, mean_squared_error, \
-    mean_absolute_error, r2_score
-import numpy as np
-import pandas as pd
-
-
-def model_evaluation(model, X_test, y_test):
-    &#34;&#34;&#34;
-    Evaluates the model based on a set of metrics
-    Classification: Accuracy, Precision, Recall, F1 and AUC
-    Regression: MSE, MAE and R2
-    checkout https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics for details
-    For CNN make sure that the test_dataset was also transformed
-
-    Examples:
-    &gt;&gt;&gt; # Evaluate any model.
-    &gt;&gt;&gt; model_evaluation(model, X_test, y_test)
-
-    Args:
-        model: A fitted ML model
-        X_test: The test dataset to be evaluated
-        y_test: The true labels
-        custom_metrics: A list of custom metrics
-    Returns:
-        Returns a dataframe containing model evaluations depending on prespecified metrics
-    &#34;&#34;&#34;
-    if type(X_test) == list:
-        assert X_test[0].shape[0] == len(y_test), &#39;X_test and y_test are not of equal length&#39;
-    else:
-        assert len(X_test) == len(y_test), &#39;X_test and y_test are not of equal length&#39;
-
-
-
-    if len(np.unique(y_test)) == 2: # classification setting
-
-        if model.__class__.__name__ in [&#39;LogisticRegressionCV&#39;, &#39;RandomForestClassifier&#39;]:
-          predictions = model.predict(X_test) # class labels
-          score = model.predict_proba(X_test)[:, 1] # probabilities
-        else:
-          score = model.predict(X_test)
-          predictions = np.round(score)
-
-        accuracy = accuracy_score(y_test, predictions)
-        precision = precision_score(y_test, predictions)
-        recall = recall_score(y_test, predictions)
-        f1 = f1_score(y_test, predictions)
-        auc = roc_auc_score(y_test, score)
-
-        return pd.DataFrame(
-            {&#34;Accuracy&#34;: [accuracy], &#34;Precision&#34;: [precision], &#34;Recall&#34;: [recall], &#34;F1&#34;: [f1], &#34;AUC&#34;: [auc]})
-    else:
-        predictions = model.predict(X_test)
-        # regression setting
-        mse = mean_squared_error(y_test, predictions)
-        mae = mean_absolute_error(y_test, predictions)
-        r2 = r2_score(y_test, predictions)
-
-        return pd.DataFrame({&#34;Mean Squared Error&#34;: [mse], &#34;Mean Absolute Error&#34;: [mae], &#34;Recall&#34;: [r2]})</code></pre>
-</details>
 </section>
 <section>
 </section>
@@ -123,63 +57,6 @@ For CNN make sure that the test_dataset was also transformed</p>
 </dl>
 <h2 id="returns">Returns</h2>
 <p>Returns a dataframe containing model evaluations depending on prespecified metrics</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def model_evaluation(model, X_test, y_test):
-    &#34;&#34;&#34;
-    Evaluates the model based on a set of metrics
-    Classification: Accuracy, Precision, Recall, F1 and AUC
-    Regression: MSE, MAE and R2
-    checkout https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics for details
-    For CNN make sure that the test_dataset was also transformed
-
-    Examples:
-    &gt;&gt;&gt; # Evaluate any model.
-    &gt;&gt;&gt; model_evaluation(model, X_test, y_test)
-
-    Args:
-        model: A fitted ML model
-        X_test: The test dataset to be evaluated
-        y_test: The true labels
-        custom_metrics: A list of custom metrics
-    Returns:
-        Returns a dataframe containing model evaluations depending on prespecified metrics
-    &#34;&#34;&#34;
-    if type(X_test) == list:
-        assert X_test[0].shape[0] == len(y_test), &#39;X_test and y_test are not of equal length&#39;
-    else:
-        assert len(X_test) == len(y_test), &#39;X_test and y_test are not of equal length&#39;
-
-
-
-    if len(np.unique(y_test)) == 2: # classification setting
-
-        if model.__class__.__name__ in [&#39;LogisticRegressionCV&#39;, &#39;RandomForestClassifier&#39;]:
-          predictions = model.predict(X_test) # class labels
-          score = model.predict_proba(X_test)[:, 1] # probabilities
-        else:
-          score = model.predict(X_test)
-          predictions = np.round(score)
-
-        accuracy = accuracy_score(y_test, predictions)
-        precision = precision_score(y_test, predictions)
-        recall = recall_score(y_test, predictions)
-        f1 = f1_score(y_test, predictions)
-        auc = roc_auc_score(y_test, score)
-
-        return pd.DataFrame(
-            {&#34;Accuracy&#34;: [accuracy], &#34;Precision&#34;: [precision], &#34;Recall&#34;: [recall], &#34;F1&#34;: [f1], &#34;AUC&#34;: [auc]})
-    else:
-        predictions = model.predict(X_test)
-        # regression setting
-        mse = mean_squared_error(y_test, predictions)
-        mae = mean_absolute_error(y_test, predictions)
-        r2 = r2_score(y_test, predictions)
-
-        return pd.DataFrame({&#34;Mean Squared Error&#34;: [mse], &#34;Mean Absolute Error&#34;: [mae], &#34;Recall&#34;: [r2]})</code></pre>
-</details>
 </dd>
 </dl>
 </section>
