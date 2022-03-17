@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>connectome.preprocessing.preprocessing_matlab_files API documentation</title>
-<meta name="description" content="This module is used as a framework to prepare raw connectivity matrices for analysis" />
+<meta name="description" content="This module is used as a framework to prepare raw connectivity matrices for analysis
+**Important**: In your excel sheet with subject information, name …" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,13 +23,15 @@
 <h1 class="title">Module <code>connectome.preprocessing.preprocessing_matlab_files</code></h1>
 </header>
 <section id="section-intro">
-<p>This module is used as a framework to prepare raw connectivity matrices for analysis</p>
+<p>This module is used as a framework to prepare raw connectivity matrices for analysis
+<strong>Important</strong>: In your excel sheet with subject information, name the id column: "ConnID". This column will be used to merge the matlab files.</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
 <pre><code class="python">&#34;&#34;&#34;
 This module is used as a framework to prepare raw connectivity matrices for analysis
+**Important**: In your excel sheet with subject information, name the id column: &#34;ConnID&#34;. This column will be used to merge the matlab files.
 &#34;&#34;&#34;
 import os
 import numpy as np
@@ -48,6 +51,7 @@ def preprocess_mat_files(matlab_dir: str = None,
                          network: str = &#39;yeo7&#39;,
                          upper: bool = True,
                          statistic: str = &#39;mean&#39;,
+                         mat_key: str = &#39;Z&#39;,
                          file_format: str = &#34;csv&#34;) -&gt; pd.DataFrame:
 
     &#34;&#34;&#34;
@@ -62,8 +66,8 @@ def preprocess_mat_files(matlab_dir: str = None,
     &gt;&gt;&gt; write_dir = r&#34;./path_to_save&#34; # ...
     &gt;&gt;&gt; export_file = True # rename to export file
     &gt;&gt;&gt; statistic = &#39;greater_zero&#39;
-    &gt;&gt;&gt; preprocess_mat_files(matlab_dir = matlab_dir, excel_path = excel_path, preprocessing_type = preprocessing_type,
-                          write_dir = write_dir, export_file = export_file, statistic = statistic)
+    &gt;&gt;&gt; preprocess_mat_files(matlab_dir=matlab_dir, excel_path=excel_path, preprocessing_type=preprocessing_type,
+    &gt;&gt;&gt;                      write_dir=write_dir, export_file=export_file, statistic=statistic)
 
 
     Args:
@@ -78,6 +82,7 @@ def preprocess_mat_files(matlab_dir: str = None,
             - only applicable if preprocessing_type = aggregation
             - one of (mean, max, min and greater_zero)
         upper: boolean whether only upper diagonal elements of connecivity matrices should be used
+        mat_key: the key under which the connectivity data is saved in the matlab files
         file_format: str. Pass &#34;h5&#34; for further modelling in python or &#34;csv&#34; for R (default &#34;csv&#34;)
 
     Returns:
@@ -89,14 +94,14 @@ def preprocess_mat_files(matlab_dir: str = None,
     if excel_path is None:
         excel_path = input(r&#39;Input your path where the excel &#39;
                            r&#39;file is stored (with name + &#34;.xlsx&#34;): &#39;)
-    if write_dir is None:
+    if write_dir is None and export_file:
         write_dir = input(r&#39;Input your path where &#39;
                           r&#39;to write the final file: &#39;)
+        assert isinstance(write_dir, str), &#34;invalid path (write_dir) provided&#34;
 
     assert isinstance(matlab_dir, str), &#34;invalid path (matlab files) provided&#34;
     assert isinstance(excel_path, str), &#34;invalid path (excel file) provided&#34;
     assert isinstance(export_file, bool), &#34;invalid datatype for argument export_file&#34;
-    assert isinstance(write_dir, str), &#34;invalid path (write_dir) provided&#34;
     assert isinstance(preprocessing_type, str) &amp; \
            (preprocessing_type == &#34;conn&#34; or
             preprocessing_type == &#34;aggregation&#34;), &#34;invalid preprocessing type&#34;
@@ -106,7 +111,7 @@ def preprocess_mat_files(matlab_dir: str = None,
 
     print(&#39;loading files&#39;)
     # load matlab files and excel
-    res = load_matlab_files(matlab_dir)
+    res = load_matlab_files(matlab_dir, mat_key)
     
     if not os.path.exists(excel_path):
         raise FileNotFoundError(&#34;invalid directory (excel file)&#34;)
@@ -143,12 +148,14 @@ def preprocess_mat_files(matlab_dir: str = None,
     return final_df
 
 
-def load_matlab_files(directory: str) -&gt; tuple:
+def load_matlab_files(directory: str,
+                      mat_key: str = &#34;Z&#34;) -&gt; tuple:
     &#34;&#34;&#34;
     imports all matlab files from specified directory
 
     Args:
         directory: Path to Matlab Files
+        mat_key: the key under which the connectivity data is saved in the matlab files
 
     Returns:
         A list where the first argument is the collection of connectivity matrix
@@ -168,7 +175,7 @@ def load_matlab_files(directory: str) -&gt; tuple:
 
     for i in mat_files_names:
         with h5py.File(i, &#39;r&#39;) as f:
-            conn_matrices.append(np.array(f.get(&#34;Z&#34;)))
+            conn_matrices.append(np.array(f.get(mat_key)))
             worked.append(i)
 
     return conn_matrices, worked
@@ -303,8 +310,9 @@ def create_final_df(file_names: list,
     ids_added_df = pd.DataFrame(ids_added) # create df, first column contains IDs
 
     # final_columns = col_names_final_df(data_from_excel = data_from_excel)
-    final_df_0 = data_from_excel.merge(ids_added_df, left_on = &#39;ConnID&#39;, right_on = 0) # merge two data frames by connID column/first column of ids_added_df
-    final_df = pd.DataFrame(np.array(final_df_0), columns=final_columns) # rename columns
+    final_df_0 = data_from_excel.merge(
+        ids_added_df, left_on=&#39;ConnID&#39;, right_on=0)  # merge two data frames by connID column/first column of ids_added_df
+    final_df = pd.DataFrame(np.array(final_df_0), columns=final_columns)  # rename columns
 
     return final_df
 
@@ -321,9 +329,12 @@ def get_subject_ids(file_names: list) -&gt; np.ndarray:
     Returns:
         A np.ndarray in a readable format
     &#34;&#34;&#34;
-    assert isinstance(file_names, list), &#34;no list of file names provided&#34;
+    if not all([&#34;Subject&#34; in i for i in file_names]):
+        raise ValueError(&#34;some filenames do not correspond to the Conn format\n&#34;
+                         &#34;example for the Conn format: &#34;
+                         &#34;resultsROI_Subject006_Condition001.mat&#34;)
 
-    return np.array([int(i.split(&#34;Subject&#34;, 1)[1][0:3]) for i in file_names])
+    return np.array([int(i.split(&#34;Subject&#34;, 1)[1].split(&#34;_&#34;)[0]) for i in file_names])
 
 
 def create_train_test_split(data: pd.DataFrame,
@@ -418,7 +429,7 @@ def grouped_conn_df(data: pd.DataFrame,
 
     arrays = pd_to_arrays(data, cols)
     grouped_conn = grouped_conn_mat(conn_matrices=arrays,
-                                   **kwargs)
+                                    **kwargs)
     if return_arrays:
         return grouped_conn
 
@@ -623,8 +634,9 @@ based on shape / number of columns of the used connectivity matrix</p>
     ids_added_df = pd.DataFrame(ids_added) # create df, first column contains IDs
 
     # final_columns = col_names_final_df(data_from_excel = data_from_excel)
-    final_df_0 = data_from_excel.merge(ids_added_df, left_on = &#39;ConnID&#39;, right_on = 0) # merge two data frames by connID column/first column of ids_added_df
-    final_df = pd.DataFrame(np.array(final_df_0), columns=final_columns) # rename columns
+    final_df_0 = data_from_excel.merge(
+        ids_added_df, left_on=&#39;ConnID&#39;, right_on=0)  # merge two data frames by connID column/first column of ids_added_df
+    final_df = pd.DataFrame(np.array(final_df_0), columns=final_columns)  # rename columns
 
     return final_df</code></pre>
 </details>
@@ -759,9 +771,12 @@ would correspond to subject ID 6</p>
     Returns:
         A np.ndarray in a readable format
     &#34;&#34;&#34;
-    assert isinstance(file_names, list), &#34;no list of file names provided&#34;
+    if not all([&#34;Subject&#34; in i for i in file_names]):
+        raise ValueError(&#34;some filenames do not correspond to the Conn format\n&#34;
+                         &#34;example for the Conn format: &#34;
+                         &#34;resultsROI_Subject006_Condition001.mat&#34;)
 
-    return np.array([int(i.split(&#34;Subject&#34;, 1)[1][0:3]) for i in file_names])</code></pre>
+    return np.array([int(i.split(&#34;Subject&#34;, 1)[1].split(&#34;_&#34;)[0]) for i in file_names])</code></pre>
 </details>
 </dd>
 <dt id="connectome.preprocessing.preprocessing_matlab_files.grouped_conn_df"><code class="name flex">
@@ -818,7 +833,7 @@ of arrays or a dataframe</dd>
 
     arrays = pd_to_arrays(data, cols)
     grouped_conn = grouped_conn_mat(conn_matrices=arrays,
-                                   **kwargs)
+                                    **kwargs)
     if return_arrays:
         return grouped_conn
 
@@ -834,7 +849,7 @@ of arrays or a dataframe</dd>
 </details>
 </dd>
 <dt id="connectome.preprocessing.preprocessing_matlab_files.load_matlab_files"><code class="name flex">
-<span>def <span class="ident">load_matlab_files</span></span>(<span>directory: str) ‑> tuple</span>
+<span>def <span class="ident">load_matlab_files</span></span>(<span>directory: str, mat_key: str = 'Z') ‑> tuple</span>
 </code></dt>
 <dd>
 <div class="desc"><p>imports all matlab files from specified directory</p>
@@ -842,6 +857,8 @@ of arrays or a dataframe</dd>
 <dl>
 <dt><strong><code>directory</code></strong></dt>
 <dd>Path to Matlab Files</dd>
+<dt><strong><code>mat_key</code></strong></dt>
+<dd>the key under which the connectivity data is saved in the matlab files</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <p>A list where the first argument is the collection of connectivity matrix
@@ -855,12 +872,14 @@ and the 2nd argument is the names of the connectivity matrix</p>
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def load_matlab_files(directory: str) -&gt; tuple:
+<pre><code class="python">def load_matlab_files(directory: str,
+                      mat_key: str = &#34;Z&#34;) -&gt; tuple:
     &#34;&#34;&#34;
     imports all matlab files from specified directory
 
     Args:
         directory: Path to Matlab Files
+        mat_key: the key under which the connectivity data is saved in the matlab files
 
     Returns:
         A list where the first argument is the collection of connectivity matrix
@@ -880,7 +899,7 @@ and the 2nd argument is the names of the connectivity matrix</p>
 
     for i in mat_files_names:
         with h5py.File(i, &#39;r&#39;) as f:
-            conn_matrices.append(np.array(f.get(&#34;Z&#34;)))
+            conn_matrices.append(np.array(f.get(mat_key)))
             worked.append(i)
 
     return conn_matrices, worked</code></pre>
@@ -905,7 +924,7 @@ and the 2nd argument is the names of the connectivity matrix</p>
 </details>
 </dd>
 <dt id="connectome.preprocessing.preprocessing_matlab_files.preprocess_mat_files"><code class="name flex">
-<span>def <span class="ident">preprocess_mat_files</span></span>(<span>matlab_dir: str = None, excel_path: str = None, export_file: bool = False, write_dir: str = None, preprocessing_type: str = 'conn', network: str = 'yeo7', upper: bool = True, statistic: str = 'mean', file_format: str = 'csv') ‑> pandas.core.frame.DataFrame</span>
+<span>def <span class="ident">preprocess_mat_files</span></span>(<span>matlab_dir: str = None, excel_path: str = None, export_file: bool = False, write_dir: str = None, preprocessing_type: str = 'conn', network: str = 'yeo7', upper: bool = True, statistic: str = 'mean', mat_key: str = 'Z', file_format: str = 'csv') ‑> pandas.core.frame.DataFrame</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Final function which combines all the other functions to read in
@@ -918,8 +937,8 @@ and transform the data.</p>
 &gt;&gt;&gt; write_dir = r&quot;./path_to_save&quot; # ...
 &gt;&gt;&gt; export_file = True # rename to export file
 &gt;&gt;&gt; statistic = 'greater_zero'
-&gt;&gt;&gt; preprocess_mat_files(matlab_dir = matlab_dir, excel_path = excel_path, preprocessing_type = preprocessing_type,
-                      write_dir = write_dir, export_file = export_file, statistic = statistic)
+&gt;&gt;&gt; preprocess_mat_files(matlab_dir=matlab_dir, excel_path=excel_path, preprocessing_type=preprocessing_type,
+&gt;&gt;&gt;                      write_dir=write_dir, export_file=export_file, statistic=statistic)
 </code></pre>
 <h2 id="args">Args</h2>
 <dl>
@@ -942,6 +961,8 @@ and transform the data.</p>
 - one of (mean, max, min and greater_zero)</dd>
 <dt><strong><code>upper</code></strong></dt>
 <dd>boolean whether only upper diagonal elements of connecivity matrices should be used</dd>
+<dt><strong><code>mat_key</code></strong></dt>
+<dd>the key under which the connectivity data is saved in the matlab files</dd>
 <dt><strong><code>file_format</code></strong></dt>
 <dd>str. Pass "h5" for further modelling in python or "csv" for R (default "csv")</dd>
 </dl>
@@ -962,6 +983,7 @@ and transform the data.</p>
                          network: str = &#39;yeo7&#39;,
                          upper: bool = True,
                          statistic: str = &#39;mean&#39;,
+                         mat_key: str = &#39;Z&#39;,
                          file_format: str = &#34;csv&#34;) -&gt; pd.DataFrame:
 
     &#34;&#34;&#34;
@@ -976,8 +998,8 @@ and transform the data.</p>
     &gt;&gt;&gt; write_dir = r&#34;./path_to_save&#34; # ...
     &gt;&gt;&gt; export_file = True # rename to export file
     &gt;&gt;&gt; statistic = &#39;greater_zero&#39;
-    &gt;&gt;&gt; preprocess_mat_files(matlab_dir = matlab_dir, excel_path = excel_path, preprocessing_type = preprocessing_type,
-                          write_dir = write_dir, export_file = export_file, statistic = statistic)
+    &gt;&gt;&gt; preprocess_mat_files(matlab_dir=matlab_dir, excel_path=excel_path, preprocessing_type=preprocessing_type,
+    &gt;&gt;&gt;                      write_dir=write_dir, export_file=export_file, statistic=statistic)
 
 
     Args:
@@ -992,6 +1014,7 @@ and transform the data.</p>
             - only applicable if preprocessing_type = aggregation
             - one of (mean, max, min and greater_zero)
         upper: boolean whether only upper diagonal elements of connecivity matrices should be used
+        mat_key: the key under which the connectivity data is saved in the matlab files
         file_format: str. Pass &#34;h5&#34; for further modelling in python or &#34;csv&#34; for R (default &#34;csv&#34;)
 
     Returns:
@@ -1003,14 +1026,14 @@ and transform the data.</p>
     if excel_path is None:
         excel_path = input(r&#39;Input your path where the excel &#39;
                            r&#39;file is stored (with name + &#34;.xlsx&#34;): &#39;)
-    if write_dir is None:
+    if write_dir is None and export_file:
         write_dir = input(r&#39;Input your path where &#39;
                           r&#39;to write the final file: &#39;)
+        assert isinstance(write_dir, str), &#34;invalid path (write_dir) provided&#34;
 
     assert isinstance(matlab_dir, str), &#34;invalid path (matlab files) provided&#34;
     assert isinstance(excel_path, str), &#34;invalid path (excel file) provided&#34;
     assert isinstance(export_file, bool), &#34;invalid datatype for argument export_file&#34;
-    assert isinstance(write_dir, str), &#34;invalid path (write_dir) provided&#34;
     assert isinstance(preprocessing_type, str) &amp; \
            (preprocessing_type == &#34;conn&#34; or
             preprocessing_type == &#34;aggregation&#34;), &#34;invalid preprocessing type&#34;
@@ -1020,7 +1043,7 @@ and transform the data.</p>
 
     print(&#39;loading files&#39;)
     # load matlab files and excel
-    res = load_matlab_files(matlab_dir)
+    res = load_matlab_files(matlab_dir, mat_key)
     
     if not os.path.exists(excel_path):
         raise FileNotFoundError(&#34;invalid directory (excel file)&#34;)

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>connectome.preprocessing.data_loader API documentation</title>
-<meta name="description" content="" />
+<meta name="description" content="several preprocessing and data transformation helpers" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,11 +22,15 @@
 <h1 class="title">Module <code>connectome.preprocessing.data_loader</code></h1>
 </header>
 <section id="section-intro">
+<p>several preprocessing and data transformation helpers</p>
 <details class="source">
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">import numpy as np
+<pre><code class="python">&#34;&#34;&#34;
+several preprocessing and data transformation helpers
+&#34;&#34;&#34;
+import numpy as np
 import pandas as pd
 
 
@@ -59,8 +63,6 @@ def create_target(dataset: pd.DataFrame) -&gt; None:
     Returns:
         None
 
-    Raises:
-        KeyError: ...
     &#34;&#34;&#34;
     assert isinstance(dataset, pd.DataFrame), &#34;supplied input [dataset] is no DataFrame&#34;
 
@@ -77,16 +79,15 @@ def drop_cases(dataset: pd.DataFrame) -&gt; pd.DataFrame:
     Returns:
         None
 
-    Raises:
-        KeyError: ...
     &#34;&#34;&#34;
     assert isinstance(dataset, pd.DataFrame), &#34;supplied input [dataset] is no DataFrame&#34;
 
     return dataset.drop(dataset[(dataset[&#34;prmdiag&#34;] == 1) | (dataset[&#34;prmdiag&#34;] == 4)].index)
 
 
-def drop_cols(dataset: pd.DataFrame, cols: tuple = (&#39;ConnID&#39;, &#39;Repseudonym&#39;,
-                                                  &#39;siteid&#39;, &#39;visdat&#39;, &#39;IDs&#39;, &#34;prmdiag&#34;)) -&gt; pd.DataFrame:
+def drop_cols(dataset: pd.DataFrame,
+              cols: tuple = (&#39;ConnID&#39;, &#39;Repseudonym&#39;,
+                             &#39;siteid&#39;, &#39;visdat&#39;, &#39;IDs&#39;, &#34;prmdiag&#34;)) -&gt; pd.DataFrame:
     &#34;&#34;&#34;
     Drops the columns which are not needed for further modelling
 
@@ -128,6 +129,14 @@ def flat_to_mat(x: np.ndarray) -&gt; np.ndarray:
       the values of the array into a symmetric matrix
     - excluding diagonal
 
+    Examples:
+    &gt;&gt;&gt; import numpy as np
+    &gt;&gt;&gt; from connectome.preprocessing.data_loader import flat_to_mat
+    &gt;&gt;&gt; k = 50 #
+    &gt;&gt;&gt; m = int((k*k)/2 - k/2)
+    &gt;&gt;&gt; x = np.random.standard_normal(size=m)
+    &gt;&gt;&gt; mat = flat_to_mat(x)
+    &gt;&gt;&gt; print(mat)
     Args:
          x: 1D array which should be turned into symmetric matrix
 
@@ -148,8 +157,15 @@ def flat_to_mat_aggregation(x: np.ndarray) -&gt; np.ndarray:
     &#34;&#34;&#34;
     - converts a flat np.array into a matrix by turning
       the values of the array into a symmetric matrix
-    - excluding diagonal
 
+    Examples:
+    &gt;&gt;&gt; import numpy as np
+    &gt;&gt;&gt; from connectome.preprocessing.data_loader import flat_to_mat_aggregation
+    &gt;&gt;&gt; k = 8 #
+    &gt;&gt;&gt; m = int((k*k)/2 + k/2)
+    &gt;&gt;&gt; x = np.random.standard_normal(size=m)
+    &gt;&gt;&gt; mat = flat_to_mat_aggregation(x)
+    &gt;&gt;&gt; print(mat)
     Args:
          x: 1D array which should be turned into symmetric matrix
 
@@ -164,7 +180,14 @@ def flat_to_mat_aggregation(x: np.ndarray) -&gt; np.ndarray:
     ind = np.triu_indices(n_a, k=0)
     A[ind] = x
     mat = A.T + A
-    return mat - .5 * np.diag(mat) * np.identity(8)</code></pre>
+    return mat - .5 * np.diag(mat) * np.identity(8)
+
+if __name__ == &#34;__main__&#34;:
+    k = 50 #
+    m = int((k*k)/2 - k/2)
+    x = np.random.standard_normal(size=m)
+    mat = flat_to_mat(x)
+    print(mat)</code></pre>
 </details>
 </section>
 <section>
@@ -185,12 +208,7 @@ def flat_to_mat_aggregation(x: np.ndarray) -&gt; np.ndarray:
 <dd>The dataset for which the target variable should be created</dd>
 </dl>
 <h2 id="returns">Returns</h2>
-<p>None</p>
-<h2 id="raises">Raises</h2>
-<dl>
-<dt><code>KeyError</code></dt>
-<dd>&hellip;</dd>
-</dl></div>
+<p>None</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -205,8 +223,6 @@ def flat_to_mat_aggregation(x: np.ndarray) -&gt; np.ndarray:
     Returns:
         None
 
-    Raises:
-        KeyError: ...
     &#34;&#34;&#34;
     assert isinstance(dataset, pd.DataFrame), &#34;supplied input [dataset] is no DataFrame&#34;
 
@@ -224,12 +240,7 @@ def flat_to_mat_aggregation(x: np.ndarray) -&gt; np.ndarray:
 <dd>dataset on which the obs. should be dropped</dd>
 </dl>
 <h2 id="returns">Returns</h2>
-<p>None</p>
-<h2 id="raises">Raises</h2>
-<dl>
-<dt><code>KeyError</code></dt>
-<dd>&hellip;</dd>
-</dl></div>
+<p>None</p></div>
 <details class="source">
 <summary>
 <span>Expand source code</span>
@@ -244,8 +255,6 @@ def flat_to_mat_aggregation(x: np.ndarray) -&gt; np.ndarray:
     Returns:
         None
 
-    Raises:
-        KeyError: ...
     &#34;&#34;&#34;
     assert isinstance(dataset, pd.DataFrame), &#34;supplied input [dataset] is no DataFrame&#34;
 
@@ -274,8 +283,9 @@ def flat_to_mat_aggregation(x: np.ndarray) -&gt; np.ndarray:
 <summary>
 <span>Expand source code</span>
 </summary>
-<pre><code class="python">def drop_cols(dataset: pd.DataFrame, cols: tuple = (&#39;ConnID&#39;, &#39;Repseudonym&#39;,
-                                                  &#39;siteid&#39;, &#39;visdat&#39;, &#39;IDs&#39;, &#34;prmdiag&#34;)) -&gt; pd.DataFrame:
+<pre><code class="python">def drop_cols(dataset: pd.DataFrame,
+              cols: tuple = (&#39;ConnID&#39;, &#39;Repseudonym&#39;,
+                             &#39;siteid&#39;, &#39;visdat&#39;, &#39;IDs&#39;, &#34;prmdiag&#34;)) -&gt; pd.DataFrame:
     &#34;&#34;&#34;
     Drops the columns which are not needed for further modelling
 
@@ -304,6 +314,15 @@ def flat_to_mat_aggregation(x: np.ndarray) -&gt; np.ndarray:
 the values of the array into a symmetric matrix</li>
 <li>excluding diagonal</li>
 </ul>
+<p>Examples:</p>
+<pre><code class="language-python-repl">&gt;&gt;&gt; import numpy as np
+&gt;&gt;&gt; from connectome.preprocessing.data_loader import flat_to_mat
+&gt;&gt;&gt; k = 50 #
+&gt;&gt;&gt; m = int((k*k)/2 - k/2)
+&gt;&gt;&gt; x = np.random.standard_normal(size=m)
+&gt;&gt;&gt; mat = flat_to_mat(x)
+&gt;&gt;&gt; print(mat)
+</code></pre>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>x</code></strong></dt>
@@ -321,6 +340,14 @@ the values of the array into a symmetric matrix</li>
       the values of the array into a symmetric matrix
     - excluding diagonal
 
+    Examples:
+    &gt;&gt;&gt; import numpy as np
+    &gt;&gt;&gt; from connectome.preprocessing.data_loader import flat_to_mat
+    &gt;&gt;&gt; k = 50 #
+    &gt;&gt;&gt; m = int((k*k)/2 - k/2)
+    &gt;&gt;&gt; x = np.random.standard_normal(size=m)
+    &gt;&gt;&gt; mat = flat_to_mat(x)
+    &gt;&gt;&gt; print(mat)
     Args:
          x: 1D array which should be turned into symmetric matrix
 
@@ -344,8 +371,16 @@ the values of the array into a symmetric matrix</li>
 <div class="desc"><ul>
 <li>converts a flat np.array into a matrix by turning
 the values of the array into a symmetric matrix</li>
-<li>excluding diagonal</li>
 </ul>
+<p>Examples:</p>
+<pre><code class="language-python-repl">&gt;&gt;&gt; import numpy as np
+&gt;&gt;&gt; from connectome.preprocessing.data_loader import flat_to_mat_aggregation
+&gt;&gt;&gt; k = 8 #
+&gt;&gt;&gt; m = int((k*k)/2 + k/2)
+&gt;&gt;&gt; x = np.random.standard_normal(size=m)
+&gt;&gt;&gt; mat = flat_to_mat_aggregation(x)
+&gt;&gt;&gt; print(mat)
+</code></pre>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>x</code></strong></dt>
@@ -361,8 +396,15 @@ the values of the array into a symmetric matrix</li>
     &#34;&#34;&#34;
     - converts a flat np.array into a matrix by turning
       the values of the array into a symmetric matrix
-    - excluding diagonal
 
+    Examples:
+    &gt;&gt;&gt; import numpy as np
+    &gt;&gt;&gt; from connectome.preprocessing.data_loader import flat_to_mat_aggregation
+    &gt;&gt;&gt; k = 8 #
+    &gt;&gt;&gt; m = int((k*k)/2 + k/2)
+    &gt;&gt;&gt; x = np.random.standard_normal(size=m)
+    &gt;&gt;&gt; mat = flat_to_mat_aggregation(x)
+    &gt;&gt;&gt; print(mat)
     Args:
          x: 1D array which should be turned into symmetric matrix
 

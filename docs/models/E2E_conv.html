@@ -179,8 +179,16 @@ class E2E_conv(Layer):
 <div class="desc"><p>This is the class from which all layers inherit.</p>
 <p>A layer is a callable object that takes as input one or more tensors and
 that outputs one or more tensors. It involves <em>computation</em>, defined
-in the <code>call()</code> method, and a <em>state</em> (weight variables), defined
-either in the constructor <code>__init__()</code> or in the <code>build()</code> method.</p>
+in the <code>call()</code> method, and a <em>state</em> (weight variables). State can be
+created in various places, at the convenience of the subclass implementer:</p>
+<ul>
+<li>in <code>__init__()</code>;</li>
+<li>in the optional <code>build()</code> method, which is invoked by the first
+<code>__call__()</code> to the layer, and supplies the shape(s) of the input(s),
+which may not have been known at initialization time;</li>
+<li>in the first invocation of <code>call()</code>, with some caveats discussed
+below.</li>
+</ul>
 <p>Users will just instantiate a layer and then treat it as a callable.</p>
 <h2 id="args">Args</h2>
 <dl>
@@ -237,15 +245,17 @@ constraints on inputs that can be accepted by the layer.</dd>
 </dl>
 <p>We recommend that descendants of <code>Layer</code> implement the following methods:</p>
 <ul>
-<li><code>__init__()</code>: Defines custom layer attributes, and creates layer state
-variables that do not depend on input shapes, using <code>add_weight()</code>.</li>
+<li><code>__init__()</code>: Defines custom layer attributes, and creates layer weights
+that do not depend on input shapes, using <code>add_weight()</code>, or other state.</li>
 <li><code>build(self, input_shape)</code>: This method can be used to create weights that
-depend on the shape(s) of the input(s), using <code>add_weight()</code>. <code>__call__()</code>
-will automatically build the layer (if it has not been built yet) by
-calling <code>build()</code>.</li>
+depend on the shape(s) of the input(s), using <code>add_weight()</code>, or other
+state. <code>__call__()</code> will automatically build the layer (if it has not been
+built yet) by calling <code>build()</code>.</li>
 <li><code>call(self, inputs, *args, **kwargs)</code>: Called in <code>__call__</code> after making
 sure <code>build()</code> has been called. <code>call()</code> performs the logic of applying the
-layer to the input tensors (which should be passed in as argument).
+layer to the <code>inputs</code>. The first invocation may additionally create state
+that could not be conveniently created in <code>build()</code>; see its docstring
+for details.
 Two reserved keyword arguments you can optionally use in <code>call()</code> are:<ul>
 <li><code>training</code> (boolean, whether the call is in inference mode or training
 mode). See more details in <a href="https://www.tensorflow.org/guide/keras/custom_layers_and_models#privileged_training_argument_in_the_call_method">the layer/model subclassing guide</a></li>
@@ -470,7 +480,7 @@ assert my_sum.trainable_weights == []
 <ul class="hlist">
 <li>keras.engine.base_layer.Layer</li>
 <li>tensorflow.python.module.module.Module</li>
-<li>tensorflow.python.training.tracking.tracking.AutoTrackable</li>
+<li>tensorflow.python.training.tracking.autotrackable.AutoTrackable</li>
 <li>tensorflow.python.training.tracking.base.Trackable</li>
 <li>keras.utils.version_utils.LayerVersionSelector</li>
 </ul>
@@ -483,8 +493,10 @@ assert my_sum.trainable_weights == []
 <div class="desc"><p>Creates the variables of the layer (optional, for subclass implementers).</p>
 <p>This is a method that implementers of subclasses of <code>Layer</code> or <code>Model</code>
 can override if they need a state-creation step in-between
-layer instantiation and layer call.</p>
-<p>This is typically used to create the weights of <code>Layer</code> subclasses.</p>
+layer instantiation and layer call. It is invoked automatically before
+the first execution of <code>call()</code>.</p>
+<p>This is typically used to create the weights of <code>Layer</code> subclasses
+(at the discretion of the subclass implementer).</p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>input_shape</code></strong></dt>
@@ -531,10 +543,10 @@ layer instantiation and layer call.</p>
 </code></dt>
 <dd>
 <div class="desc"><p>This is where the layer's logic lives.</p>
-<p>Note here that <code>call()</code> method in <code>tf.keras</code> is little bit different
-from <code>keras</code> API. In <code>keras</code> API, you can pass support masking for
-layers as additional arguments. Whereas <code>tf.keras</code> has <code>compute_mask()</code>
-method to support masking.</p>
+<p>The <code>call()</code> method may not create state (except in its first invocation,
+wrapping the creation of variables or other resources in <code>tf.init_scope()</code>).
+It is recommended to create state in <code>__init__()</code>, or the <code>build()</code> method
+that is called automatically before <code>call()</code> executes the first time.</p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>inputs</code></strong></dt>
@@ -605,9 +617,9 @@ layer with masking support).</dd>
 </code></dt>
 <dd>
 <div class="desc"><p>Computes the output shape of the layer.</p>
-<p>If the layer has not been built, this method will call <code>build</code> on the
-layer. This assumes that the layer will later be used with inputs that
-match the input shape provided here.</p>
+<p>This method will cause the layer's state to be built, if that has not
+happened before. This requires that the layer will later be used with
+inputs that match the input shape provided here.</p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>input_shape</code></strong></dt>

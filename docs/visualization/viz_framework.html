@@ -45,17 +45,33 @@ def visualization_framework(model,
                             viz_method: str = &#39;GFI&#39;,
                             **kwargs):
     &#34;&#34;&#34;
-    Returns feature importance and other visualization techniques
+    Returns feature importance and other visualization techniques. Methods: &#34;GFI&#34; and &#34;GFI_only&#34; work for elastic net and random forest, if an aggregation by yeo7 is possible. 
+    &#34;FI&#34; and &#34;FI_only&#34; work for elastic net and random forest.
+    &#34;elastic_net&#34; works for elastic net models.
+    &#34;shapley&#34; works for random forest and gradient boosting.
+    &#34;feature_attribution&#34; works for CNN.
+    For more details on the methods, see the documentations of the respective functions.
 
     Examples:
     &gt;&gt;&gt; # Visualize Saliency Maps for neural networks
     &gt;&gt;&gt; visualization_framework(model = model,
                                 X = X_test,
                                 y= y_test,
-                                viz_method = &#39;feature_attribution,
+                                viz_method = &#39;feature_attribution&#39;,
                                 method=&#39;saliency&#39;,
                                 average=True,
                                 ordered = True)
+    &gt;&gt;&gt; # Calculate and visualize the Grouped Permutation Feature Importance, e.g. for an elastic net model. Works similar for &#39;GFI_only&#39;, &#39;FI&#39; and &#39;FI_only&#39;.
+    &gt;&gt;&gt; visualization_framework(model = model,
+                                X = X_test,
+                                y= y_test,
+                                viz_method = &#39;GFI&#39;,
+                                m = 20) # the higher m (number of permutations) the more accurate the result, but the longer the runtime
+    &gt;&gt;&gt; # Plot coefficients of an elastic net model
+    &gt;&gt;&gt; visualization_framework(model = model,
+                                X = X_test,
+                                y= y_test,
+                                viz_method = &#39;elastic_net&#39;)
 
     Args:
         model: a trained ML Model
@@ -143,16 +159,32 @@ def visualization_framework(model,
 <span>def <span class="ident">visualization_framework</span></span>(<span>model, X, y=None, viz_method: str = 'GFI', **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Returns feature importance and other visualization techniques</p>
+<div class="desc"><p>Returns feature importance and other visualization techniques. Methods: "GFI" and "GFI_only" work for elastic net and random forest, if an aggregation by yeo7 is possible.
+"FI" and "FI_only" work for elastic net and random forest.
+"elastic_net" works for elastic net models.
+"shapley" works for random forest and gradient boosting.
+"feature_attribution" works for CNN.
+For more details on the methods, see the documentations of the respective functions.</p>
 <p>Examples:</p>
 <pre><code class="language-python-repl">&gt;&gt;&gt; # Visualize Saliency Maps for neural networks
 &gt;&gt;&gt; visualization_framework(model = model,
                             X = X_test,
                             y= y_test,
-                            viz_method = 'feature_attribution,
+                            viz_method = 'feature_attribution',
                             method='saliency',
                             average=True,
                             ordered = True)
+&gt;&gt;&gt; # Calculate and visualize the Grouped Permutation Feature Importance, e.g. for an elastic net model. Works similar for 'GFI_only', 'FI' and 'FI_only'.
+&gt;&gt;&gt; visualization_framework(model = model,
+                            X = X_test,
+                            y= y_test,
+                            viz_method = 'GFI',
+                            m = 20) # the higher m (number of permutations) the more accurate the result, but the longer the runtime
+&gt;&gt;&gt; # Plot coefficients of an elastic net model
+&gt;&gt;&gt; visualization_framework(model = model,
+                            X = X_test,
+                            y= y_test,
+                            viz_method = 'elastic_net')
 </code></pre>
 <h2 id="args">Args</h2>
 <dl>
@@ -179,17 +211,33 @@ of "GFI", "GFI_only", "FI", "FI_only", "elastic_net", "shapley", or "feature_att
                             viz_method: str = &#39;GFI&#39;,
                             **kwargs):
     &#34;&#34;&#34;
-    Returns feature importance and other visualization techniques
+    Returns feature importance and other visualization techniques. Methods: &#34;GFI&#34; and &#34;GFI_only&#34; work for elastic net and random forest, if an aggregation by yeo7 is possible. 
+    &#34;FI&#34; and &#34;FI_only&#34; work for elastic net and random forest.
+    &#34;elastic_net&#34; works for elastic net models.
+    &#34;shapley&#34; works for random forest and gradient boosting.
+    &#34;feature_attribution&#34; works for CNN.
+    For more details on the methods, see the documentations of the respective functions.
 
     Examples:
     &gt;&gt;&gt; # Visualize Saliency Maps for neural networks
     &gt;&gt;&gt; visualization_framework(model = model,
                                 X = X_test,
                                 y= y_test,
-                                viz_method = &#39;feature_attribution,
+                                viz_method = &#39;feature_attribution&#39;,
                                 method=&#39;saliency&#39;,
                                 average=True,
                                 ordered = True)
+    &gt;&gt;&gt; # Calculate and visualize the Grouped Permutation Feature Importance, e.g. for an elastic net model. Works similar for &#39;GFI_only&#39;, &#39;FI&#39; and &#39;FI_only&#39;.
+    &gt;&gt;&gt; visualization_framework(model = model,
+                                X = X_test,
+                                y= y_test,
+                                viz_method = &#39;GFI&#39;,
+                                m = 20) # the higher m (number of permutations) the more accurate the result, but the longer the runtime
+    &gt;&gt;&gt; # Plot coefficients of an elastic net model
+    &gt;&gt;&gt; visualization_framework(model = model,
+                                X = X_test,
+                                y= y_test,
+                                viz_method = &#39;elastic_net&#39;)
 
     Args:
         model: a trained ML Model
