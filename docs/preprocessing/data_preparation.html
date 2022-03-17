@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>connectome.preprocessing.data_preparation API documentation</title>
-<meta name="description" content="" />
+<meta name="description" content="helper function to transform the processed data into the right format" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,6 +22,7 @@
 <h1 class="title">Module <code>connectome.preprocessing.data_preparation</code></h1>
 </header>
 <section id="section-intro">
+<p>helper function to transform the processed data into the right format</p>
 </section>
 <section>
 </section>
@@ -36,33 +37,37 @@
 <dd>
 <div class="desc"><p>Function that prepares the data for modelling</p>
 <p>Examples:</p>
-<pre><code class="language-python-repl">&gt;&gt;&gt; prepare data for classification task (e. g. classification of diagnosis)
+<pre><code class="language-python-repl">&gt;&gt;&gt; # prepare data for classification task (e. g. classification of diagnosis)
 &gt;&gt;&gt; classification = True
-&gt;&gt;&gt; columns_drop = [&quot;ConnID&quot;, &quot;Repseudonym&quot;, &quot;siteid&quot;, &quot;visdat&quot;, &quot;MEM_score&quot;, &quot;Apoe&quot;, &quot;IDs&quot;]
+&gt;&gt;&gt; columns_drop = [&quot;ConnID&quot;, &quot;Repseudonym&quot;, &quot;siteid&quot;, &quot;visdat&quot;,
+&gt;&gt;&gt;                 &quot;MEM_score&quot;, &quot;Apoe&quot;, &quot;IDs&quot;]
 &gt;&gt;&gt; target = &quot;prmdiag&quot;
 &gt;&gt;&gt; y_0 = [0]
 &gt;&gt;&gt; y_1 = [2, 3]
 &gt;&gt;&gt; train_size = 0.8
 &gt;&gt;&gt; seed = 1855
 &gt;&gt;&gt; split = True
-&gt;&gt;&gt; X_train, y_train, X_test, y_test = prepare_data(data = df, 
-                                                                      classification = classification,
-                                                      columns_drop = columns_drop, 
-                                                                      target = target, y_0 = y_0, y_1 = y_1,
-                                                    train_size = train_size, seed = seed, split = split)
+&gt;&gt;&gt; X_train, y_train, X_test, y_test = prepare_data(data=df,
+&gt;&gt;&gt;                                                 classification=classification,
+&gt;&gt;&gt;                                                 columns_drop=columns_drop,
+&gt;&gt;&gt;                                                 target=target, y_0=y_0, y_1=y_1,
+&gt;&gt;&gt;                                                 train_size=train_size,
+&gt;&gt;&gt;                                                 seed=seed, split=split)
 &gt;&gt;&gt;
-&gt;&gt;&gt; prepare data for regression task (e. g. regression with MEM_score as target)
+&gt;&gt;&gt; # prepare data for regression task (e. g. regression with MEM_score as target)
 &gt;&gt;&gt; classification = False
-&gt;&gt;&gt; columns_drop = [&quot;ConnID&quot;, &quot;Repseudonym&quot;, &quot;siteid&quot;, &quot;visdat&quot;, &quot;prmdiag&quot;, &quot;Apoe&quot;, &quot;IDs&quot;]
+&gt;&gt;&gt; columns_drop = [&quot;ConnID&quot;, &quot;Repseudonym&quot;, &quot;siteid&quot;, &quot;visdat&quot;,
+&gt;&gt;&gt;                 &quot;prmdiag&quot;, &quot;Apoe&quot;, &quot;IDs&quot;]
 &gt;&gt;&gt; target = &quot;MEM_score&quot;
 &gt;&gt;&gt; train_size = 0.8
 &gt;&gt;&gt; seed = 1855
 &gt;&gt;&gt; split = True
-&gt;&gt;&gt; X_train, y_train, X_test, y_test = prepare_data(data = df, 
-                                                                      classification = classification,
-                                                      columns_drop = columns_drop, 
-                                                                      target = target, 
-                                                    train_size = train_size, seed = seed, split = split)
+&gt;&gt;&gt; X_train, y_train, X_test, y_test = prepare_data(data=df,
+&gt;&gt;&gt;                                                 classification=classification,
+&gt;&gt;&gt;                                                 columns_drop=columns_drop,
+&gt;&gt;&gt;                                                 target=target,
+&gt;&gt;&gt;                                                 train_size=train_size,
+&gt;&gt;&gt;                                                 seed=seed, split=split)
 </code></pre>
 <h2 id="args">Args</h2>
 <dl>
@@ -71,13 +76,16 @@
 <dt><strong><code>classification</code></strong></dt>
 <dd>boolean, if false regression task</dd>
 <dt><strong><code>columns_drop</code></strong></dt>
-<dd>which columns should be dropped (all other columns will be used for modelling)</dd>
+<dd>which columns should be dropped (all other columns
+will be used for modelling)</dd>
 <dt><strong><code>target</code></strong></dt>
 <dd>name of the target variable</dd>
 <dt><strong><code>y_0</code></strong></dt>
-<dd>(only relevant for classification task) which values of target should be treated as 0</dd>
+<dd>(only relevant for classification task) which values of
+target should be treated as 0</dd>
 <dt><strong><code>y_1</code></strong></dt>
-<dd>(only relevant for classification task) which values of target should be treated as 1</dd>
+<dd>(only relevant for classification task) which values of
+target should be treated as 1</dd>
 <dt><strong><code>train_size</code></strong></dt>
 <dd>size of the training data (default 0.8)</dd>
 <dt><strong><code>seed</code></strong></dt>

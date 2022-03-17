@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>connectome.models.evaluation API documentation</title>
-<meta name="description" content="Evaluation of fitted model on test data" />
+<meta name="description" content="function to evaluate the fitted model on test data" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,7 +22,7 @@
 <h1 class="title">Module <code>connectome.models.evaluation</code></h1>
 </header>
 <section id="section-intro">
-<p>Evaluation of fitted model on test data</p>
+<p>function to evaluate the fitted model on test data</p>
 </section>
 <section>
 </section>
@@ -35,11 +35,11 @@
 <span>def <span class="ident">model_evaluation</span></span>(<span>model, X_test, y_test)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Evaluates the model based on a set of metrics
-Classification: Accuracy, Precision, Recall, F1 and AUC
-Regression: MSE, MAE and R2
-checkout <a href="https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics">https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics</a> for details
-For CNN make sure that the test_dataset was also transformed</p>
+<div class="desc"><p>Evaluates the model based on a set of metrics.
+Classification: Accuracy, Precision, Recall, F1 and AUC.
+Regression: MSE, MAE and R2.
+Checkout <a href="https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics">https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics</a> for details.
+For CNN make sure that the test_dataset was also transformed.</p>
 <p>Examples:</p>
 <pre><code class="language-python-repl">&gt;&gt;&gt; # Evaluate any model.
 &gt;&gt;&gt; model_evaluation(model, X_test, y_test)
