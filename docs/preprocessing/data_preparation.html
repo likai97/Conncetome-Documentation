@@ -22,116 +22,6 @@
 <h1 class="title">Module <code>connectome.preprocessing.data_preparation</code></h1>
 </header>
 <section id="section-intro">
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-
-def prepare_data(data: pd.DataFrame, classification: bool = True, 
-                 columns_drop: list = [&#34;ConnID&#34;, &#34;Repseudonym&#34;, &#34;siteid&#34; &#34;visdat&#34;, &#34;MEM_Score&#34;, &#34;Apoe&#34;, &#34;IDs&#34;], 
-                 target: str = &#34;prmdiag&#34;, y_0: list = [0], y_1: list = [2, 3],
-                 train_size: float = 0.8, seed: int = 123, split = True):
-    &#34;&#34;&#34;
-    Function that prepares the data for modelling
-    
-    Args:
-        data: A pd.Dataframe
-        classification: boolean, if false regression task
-        columns_drop: which columns should be dropped (all other columns will be used for modelling)
-        target: name of the target variable
-        y_0: (only relevant for classification task) which values of target should be treated as 0
-        y_1: (only relevant for classification task) which values of target should be treated as 1
-        train_size: size of the training data (default 0.8)
-        seed: seed for reproducibility of train/test split
-        split: should a train/test split be performed or not?
-    Returns:
-        Xtrain, ytrain, Xtest, ytest
-    &#34;&#34;&#34;
-
-    # check input types
-    assert isinstance(data, pd.DataFrame), &#34;provided data is no pd.DataFrame&#34;
-    assert isinstance(classification, bool), &#34;classification is no boolean&#34;
-    assert isinstance(columns_drop, list), &#34;invalid columns_drop, must be list&#34;
-    assert all(isinstance(x, str) for x in columns_drop), &#34;invalid columns_drop, elements must be strings&#34;
-    assert isinstance(target, str), &#34;invalid target, must be string&#34;
-    assert isinstance(y_0, list), &#34;invalid, y_0, must be list&#34;
-    assert isinstance(y_1, list), &#34;invalid, y_1, must be list&#34;
-    assert isinstance(train_size, float), &#34;invalid train size, must be float&#34;
-    assert isinstance(seed, int), &#34;provided seed is no integer&#34;
-    assert isinstance(split, bool), &#34;split is no boolean&#34;
-
-    # check if inputs are valid
-    assert (train_size &gt; 0.0) &amp; (train_size &lt; 1.0), &#34;invalid train size, must be &gt; 0 and &lt; 1&#34; 
-    assert target in data.columns, &#34;target not found in columns of data&#34;
-    assert all(x in data.columns for x in columns_drop), &#34;columns_drop not found in columns of data&#34;
-    if classification:
-      assert all(x in data[target].unique() for x in y_0), &#34;y_0 not found in target variable&#34;
-      assert all(x in data[target].unique() for x in y_1), &#34;y_1 not found in target variable&#34;
-
-    dat = data.copy()
-
-
-    # create y variable
-    if classification:
-            
-      # create 0 and 1 based on target and y_0 and y_1
-      target_0 = dat[target].isin(y_0)
-      target_1 = dat[target].isin(y_1)
-  
-      dat.loc[target_0, &#34;y&#34;] = 0
-      dat.loc[target_1, &#34;y&#34;] = 1
-
-      # drop NAs in y
-      dat.dropna(subset = [&#34;y&#34;], inplace = True)
-
-    else: # regression
-
-      dat[&#34;y&#34;] = dat[target]
-
-    # drop target (as y was created) and other columns 
-    dat.drop(columns=columns_drop, inplace = True)
-    dat.drop(columns=[target], inplace = True)
-
-
-    # reorder data so that y is the first variable
-    dat = pd.concat([dat[&#34;y&#34;], dat.drop(columns = [&#34;y&#34;])], axis=1)
-
-    if split:
-      # perform train/test split
-      data_list = train_test_split(dat, train_size=train_size, random_state=seed, shuffle=True)
-
-      ytrain, Xtrain, ytest, Xtest = data_list[0][&#34;y&#34;], data_list[0].drop(columns=&#34;y&#34;), data_list[1][&#34;y&#34;], data_list[1].drop(columns=&#34;y&#34;)
-
-      scaler = StandardScaler()
-
-      Xtrain_scale = scaler.fit_transform(Xtrain)
-      Xtrain = pd.DataFrame(Xtrain_scale, index = Xtrain.index, columns = Xtrain.columns)
-      Xtest_scale = scaler.transform(Xtest)
-      Xtest = pd.DataFrame(Xtest_scale, index = Xtest.index, columns = Xtest.columns)
-
-    else:
-      
-      scaler = StandardScaler()
-
-      y, X = dat[&#34;y&#34;], dat.drop(columns = &#34;y&#34;)
-      X_scale = scaler.fit_transform(X)
-      X = pd.DataFrame(X_scale, index = X.index, columns = X.columns)
-
-      Xtest = X
-      ytest = y
-      Xtrain = None
-      ytrain = None
-
-
-
-
-
-    return Xtrain, ytrain, Xtest, ytest</code></pre>
-</details>
 </section>
 <section>
 </section>
@@ -145,6 +35,35 @@ def prepare_data(data: pd.DataFrame, classification: bool = True,
 </code></dt>
 <dd>
 <div class="desc"><p>Function that prepares the data for modelling</p>
+<p>Examples:</p>
+<pre><code class="language-python-repl">&gt;&gt;&gt; prepare data for classification task (e. g. classification of diagnosis)
+&gt;&gt;&gt; classification = True
+&gt;&gt;&gt; columns_drop = [&quot;ConnID&quot;, &quot;Repseudonym&quot;, &quot;siteid&quot;, &quot;visdat&quot;, &quot;MEM_score&quot;, &quot;Apoe&quot;, &quot;IDs&quot;]
+&gt;&gt;&gt; target = &quot;prmdiag&quot;
+&gt;&gt;&gt; y_0 = [0]
+&gt;&gt;&gt; y_1 = [2, 3]
+&gt;&gt;&gt; train_size = 0.8
+&gt;&gt;&gt; seed = 1855
+&gt;&gt;&gt; split = True
+&gt;&gt;&gt; X_train, y_train, X_test, y_test = prepare_data(data = df, 
+                                                                      classification = classification,
+                                                      columns_drop = columns_drop, 
+                                                                      target = target, y_0 = y_0, y_1 = y_1,
+                                                    train_size = train_size, seed = seed, split = split)
+&gt;&gt;&gt;
+&gt;&gt;&gt; prepare data for regression task (e. g. regression with MEM_score as target)
+&gt;&gt;&gt; classification = False
+&gt;&gt;&gt; columns_drop = [&quot;ConnID&quot;, &quot;Repseudonym&quot;, &quot;siteid&quot;, &quot;visdat&quot;, &quot;prmdiag&quot;, &quot;Apoe&quot;, &quot;IDs&quot;]
+&gt;&gt;&gt; target = &quot;MEM_score&quot;
+&gt;&gt;&gt; train_size = 0.8
+&gt;&gt;&gt; seed = 1855
+&gt;&gt;&gt; split = True
+&gt;&gt;&gt; X_train, y_train, X_test, y_test = prepare_data(data = df, 
+                                                                      classification = classification,
+                                                      columns_drop = columns_drop, 
+                                                                      target = target, 
+                                                    train_size = train_size, seed = seed, split = split)
+</code></pre>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>data</code></strong></dt>
@@ -168,111 +87,6 @@ def prepare_data(data: pd.DataFrame, classification: bool = True,
 </dl>
 <h2 id="returns">Returns</h2>
 <p>Xtrain, ytrain, Xtest, ytest</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def prepare_data(data: pd.DataFrame, classification: bool = True, 
-                 columns_drop: list = [&#34;ConnID&#34;, &#34;Repseudonym&#34;, &#34;siteid&#34; &#34;visdat&#34;, &#34;MEM_Score&#34;, &#34;Apoe&#34;, &#34;IDs&#34;], 
-                 target: str = &#34;prmdiag&#34;, y_0: list = [0], y_1: list = [2, 3],
-                 train_size: float = 0.8, seed: int = 123, split = True):
-    &#34;&#34;&#34;
-    Function that prepares the data for modelling
-    
-    Args:
-        data: A pd.Dataframe
-        classification: boolean, if false regression task
-        columns_drop: which columns should be dropped (all other columns will be used for modelling)
-        target: name of the target variable
-        y_0: (only relevant for classification task) which values of target should be treated as 0
-        y_1: (only relevant for classification task) which values of target should be treated as 1
-        train_size: size of the training data (default 0.8)
-        seed: seed for reproducibility of train/test split
-        split: should a train/test split be performed or not?
-    Returns:
-        Xtrain, ytrain, Xtest, ytest
-    &#34;&#34;&#34;
-
-    # check input types
-    assert isinstance(data, pd.DataFrame), &#34;provided data is no pd.DataFrame&#34;
-    assert isinstance(classification, bool), &#34;classification is no boolean&#34;
-    assert isinstance(columns_drop, list), &#34;invalid columns_drop, must be list&#34;
-    assert all(isinstance(x, str) for x in columns_drop), &#34;invalid columns_drop, elements must be strings&#34;
-    assert isinstance(target, str), &#34;invalid target, must be string&#34;
-    assert isinstance(y_0, list), &#34;invalid, y_0, must be list&#34;
-    assert isinstance(y_1, list), &#34;invalid, y_1, must be list&#34;
-    assert isinstance(train_size, float), &#34;invalid train size, must be float&#34;
-    assert isinstance(seed, int), &#34;provided seed is no integer&#34;
-    assert isinstance(split, bool), &#34;split is no boolean&#34;
-
-    # check if inputs are valid
-    assert (train_size &gt; 0.0) &amp; (train_size &lt; 1.0), &#34;invalid train size, must be &gt; 0 and &lt; 1&#34; 
-    assert target in data.columns, &#34;target not found in columns of data&#34;
-    assert all(x in data.columns for x in columns_drop), &#34;columns_drop not found in columns of data&#34;
-    if classification:
-      assert all(x in data[target].unique() for x in y_0), &#34;y_0 not found in target variable&#34;
-      assert all(x in data[target].unique() for x in y_1), &#34;y_1 not found in target variable&#34;
-
-    dat = data.copy()
-
-
-    # create y variable
-    if classification:
-            
-      # create 0 and 1 based on target and y_0 and y_1
-      target_0 = dat[target].isin(y_0)
-      target_1 = dat[target].isin(y_1)
-  
-      dat.loc[target_0, &#34;y&#34;] = 0
-      dat.loc[target_1, &#34;y&#34;] = 1
-
-      # drop NAs in y
-      dat.dropna(subset = [&#34;y&#34;], inplace = True)
-
-    else: # regression
-
-      dat[&#34;y&#34;] = dat[target]
-
-    # drop target (as y was created) and other columns 
-    dat.drop(columns=columns_drop, inplace = True)
-    dat.drop(columns=[target], inplace = True)
-
-
-    # reorder data so that y is the first variable
-    dat = pd.concat([dat[&#34;y&#34;], dat.drop(columns = [&#34;y&#34;])], axis=1)
-
-    if split:
-      # perform train/test split
-      data_list = train_test_split(dat, train_size=train_size, random_state=seed, shuffle=True)
-
-      ytrain, Xtrain, ytest, Xtest = data_list[0][&#34;y&#34;], data_list[0].drop(columns=&#34;y&#34;), data_list[1][&#34;y&#34;], data_list[1].drop(columns=&#34;y&#34;)
-
-      scaler = StandardScaler()
-
-      Xtrain_scale = scaler.fit_transform(Xtrain)
-      Xtrain = pd.DataFrame(Xtrain_scale, index = Xtrain.index, columns = Xtrain.columns)
-      Xtest_scale = scaler.transform(Xtest)
-      Xtest = pd.DataFrame(Xtest_scale, index = Xtest.index, columns = Xtest.columns)
-
-    else:
-      
-      scaler = StandardScaler()
-
-      y, X = dat[&#34;y&#34;], dat.drop(columns = &#34;y&#34;)
-      X_scale = scaler.fit_transform(X)
-      X = pd.DataFrame(X_scale, index = X.index, columns = X.columns)
-
-      Xtest = X
-      ytest = y
-      Xtrain = None
-      ytrain = None
-
-
-
-
-
-    return Xtrain, ytrain, Xtest, ytest</code></pre>
-</details>
 </dd>
 </dl>
 </section>

@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>connectome.models.framework API documentation</title>
-<meta name="description" content="This module is used as a framework to open up saved models, train new models and save newly trained models" />
+<meta name="description" content="Framework to open up saved models as well as train and save new models" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,141 +22,7 @@
 <h1 class="title">Module <code>connectome.models.framework</code></h1>
 </header>
 <section id="section-intro">
-<p>This module is used as a framework to open up saved models, train new models and save newly trained models</p>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">&#34;&#34;&#34;This module is used as a framework to open up saved models, train new models and save newly trained models
-&#34;&#34;&#34;
-
-import pandas as pd
-import keras
-import tensorflow as tf
-from keras.models import load_model
-from keras.models import save
-import pickle
-from connectome.models.brainnet_cnn import model_brainnet_cnn
-from connectome.models.ebm import EBMmi
-from connectome.models.lgb import GB
-from connectome.models.pipeline_elastic_net import model_elastic_net
-from connectome.models.pipeline_RF import run_random_forest
-
-
-def model_framework(X_train, y_train,
-                    model: str,
-                    pretrained: bool = True,
-                    model_path: str = None,
-                    save: bool = False,
-                    t_direct: str = None,
-                    **kwargs):
-    &#34;&#34;&#34;
-    Function that lets the user decide what type of model he wants to use for his data and which parameters to use
-
-    Examples:
-    &gt;&gt;&gt; # Different optimizer and loss function
-    &gt;&gt;&gt; from tf.keras.optimizers import Nadam
-    &gt;&gt;&gt; from tf.keras.losses import Hinge()
-    &gt;&gt;&gt; model = model_framework(X_train = X_train,
-                                y_train = y_train,
-                                model = &#34;cnn&#34;,
-                                pretrained = False,
-                                model_path = None,
-                                epochs = 500,
-                                patience = 10,
-                                optimizer= NAdam(),
-                                loss= Hinge())
-
-
-    Args:
-        X_train: The training dataset
-        y_train: The true labels
-        pretrained: If a new model should be trained or a pretrained model should be used
-                    (True/False, default True uses pretrained model
-        model: A string to enter which model to use (&#34;elnet&#34; = elastic net, &#34;gboost&#34; = gradient boosting,
-                                                     &#34;rf&#34; = random forest, &#34;cnn&#34; = convolutional neural network,
-                                                     &#34;ebm&#34; = explainable boosting machine)
-        model_path: Full path to the folder where the selected pretrained model is stored
-        save: If the newly trained model should be saved
-        t_direct: Target directory to save the model in
-        **kwargs: Additional parameters and options depending on the selected model
-    Returns:
-        A fitted model
-    Raises:
-        FileNotFoundError
-        IOError
-    &#34;&#34;&#34;
-    assert isinstance(model, str), &#34;invalid option, must be string&#34;
-    assert model in [&#34;elnet&#34;, &#34;gboost&#34;, &#34;rf&#34;, &#34;cnn&#34;,
-                     &#34;ebm&#34;], &#34;please provide a valid model (elnet, gboost, ebm, rf or cnn)&#34;
-    assert isinstance(pretrained, bool), &#34;invalid pretrained, must be True/False&#34;
-    if pretrained:
-        pass
-    else:
-        assert len(X_train) == len(y_train), &#34;X_train and y_train must be the same length&#34;
-
-    classification = False
-    if len(set(y_train)) == 2:  # Checking whether classification or regression is needed
-        classification = True
-
-        # loading pretrained models
-    if pretrained:
-        if not os.path.exists(&#34;model_path&#34;):
-            raise FileNotFoundError(&#34;File not found, please specify exact name and make sure the location is correct&#34;)
-        if model == &#34;elnet&#34;:
-            rmodel = pickle.load(open(model_path, &#39;rb&#39;))
-        elif model == &#34;gboost&#34;:
-            rmodel = pickle.load(open(model_path, &#39;rb&#39;))
-        elif model == &#34;ebm&#34;:
-            rmodel = pickle.load(open(model_path, &#39;rb&#39;))
-        elif model == &#34;rf&#34;:
-            rmodel = pickle.load(open(model_path, &#39;rb&#39;))
-        else:
-            try:
-                rmodel = load_model(model_path)
-            except IOError:
-                print(&#34;File not found, please specify exact name and make sure the location is correct&#34;)
-                raise
-
-    else:  # training new models
-        if model == &#34;elnet&#34;:
-            rmodel = model_elastic_net(X_train, y_train, classification, **kwargs)
-
-        elif model == &#34;ebm&#34;:
-            rmodel = EBMmi(X_train, y_train, classification=classification, **kwargs)
-        elif model == &#34;gboost&#34;:
-            rmodel = GB(X_train, y_train, classification=True)
-
-        elif model == &#34;rf&#34;:
-            rmodel = run_random_forest(X_train, y_train, classification, **kwargs)
-
-        else:
-            rmodel = model_brainnet_cnn(X_train, y_train, **kwargs)
-
-    # saving model
-
-    if save:
-        if not os.path.exists(t_direct):
-            raise FileNotFoundError(&#34;Invalid path (write to dir)&#34;)
-        if model == &#34;elnet&#34;:
-            filename = os.path.join(t_direct, &#34;trained_elnet&#34;)
-            pickle.dump(model, open(filename, &#39;wb&#39;))
-        elif model == &#34;ebm&#34;:
-            filename = os.path.join(t_direct, &#34;trained_ebm&#34;)
-            pickle.dump(model, open(filename, &#39;wb&#39;))
-        elif model == &#34;gboost&#34;:
-            filename = os.path.join(t_direct, &#34;trained_gboost&#34;)
-            pickle.dump(model, open(filename, &#39;wb&#39;))
-        elif model == &#34;rf&#34;:
-            filename = os.path.join(t_direct, &#34;trained_randomforest&#34;)
-            pickle.dump(model, open(filename, &#39;wb&#39;))
-
-        else:
-            filename = os.path.join(t_direct, &#34;trained_cnn&#34;)
-            rmodel.save(filename)
-
-    return rmodel</code></pre>
-</details>
+<p>Framework to open up saved models as well as train and save new models</p>
 </section>
 <section>
 </section>
@@ -169,11 +35,14 @@ def model_framework(X_train, y_train,
 <span>def <span class="ident">model_framework</span></span>(<span>X_train, y_train, model: str, pretrained: bool = True, model_path: str = None, save: bool = False, t_direct: str = None, **kwargs)</span>
 </code></dt>
 <dd>
-<div class="desc"><p>Function that lets the user decide what type of model he wants to use for his data and which parameters to use</p>
+<div class="desc"><p>Function that lets the user decide what type of model he wants to use for his data and which parameters to use.
+See the documentation of the modelling functions for more information on further parameters that can be specified.</p>
 <p>Examples:</p>
-<pre><code class="language-python-repl">&gt;&gt;&gt; # Different optimizer and loss function
+<pre><code class="language-python-repl">&gt;&gt;&gt; # CNN:
+&gt;&gt;&gt; # Different optimizer and loss function
+&gt;&gt;&gt; import tensorflow as tf
 &gt;&gt;&gt; from tf.keras.optimizers import Nadam
-&gt;&gt;&gt; from tf.keras.losses import Hinge()
+&gt;&gt;&gt; from tf.keras.losses import Hinge
 &gt;&gt;&gt; model = model_framework(X_train = X_train,
                             y_train = y_train,
                             model = &quot;cnn&quot;,
@@ -181,8 +50,39 @@ def model_framework(X_train, y_train,
                             model_path = None,
                             epochs = 500,
                             patience = 10,
-                            optimizer= NAdam(),
+                            optimizer= Nadam(),
                             loss= Hinge())
+&gt;&gt;&gt; 
+&gt;&gt;&gt; # Elastic Net:
+&gt;&gt;&gt; # classification task:
+&gt;&gt;&gt; model = model_framework(X_train = X_train,
+                            y_train = y_train,
+                            model = &quot;elnet&quot;,
+                            pretrained = False,
+                            n_alphas_logreg = 5, 
+                            cv_logreg = 3, 
+                            l1_ratios_logreg = [0.0, 0.1])
+&gt;&gt;&gt; # you can transform the values before modelling, e.g. take the absolute values (remember to also transform X_test for evaluation):
+&gt;&gt;&gt; X_train = prepare_data_elastic_net(data = X_train,
+                                                     option = &quot;abs&quot;)
+&gt;&gt;&gt; X_test = prepare_data_elastic_net(data = X_test,
+                                                     option = &quot;abs&quot;)
+&gt;&gt;&gt; # regression task:
+&gt;&gt;&gt; model = model_framework(X_train = X_train,
+                            y_train = y_train,
+                            model = &quot;elnet&quot;,
+                            pretrained = False,
+                            n_alphas_linreg = 20,
+                            cv_linreg = 5, 
+                            l1_ratios_linreg = [0.01, 0.1])
+&gt;&gt;&gt; # you don't have to specifiy n_alphas_logreg/linreg, cv_logreg/linreg or l1_ratios_logreg/linreg and take the default values instead (see documentation of elastic net function)
+&gt;&gt;&gt; 
+&gt;&gt;&gt; # Random Forest:
+&gt;&gt;&gt; model = model_framework(X_train = X_train,
+                            y_train = y_train,
+                            model = &quot;rf&quot;,
+                            pretrained = False,
+                            n_estimators = 100)  
 </code></pre>
 <h2 id="args">Args</h2>
 <dl>
@@ -211,124 +111,6 @@ def model_framework(X_train, y_train,
 <h2 id="raises">Raises</h2>
 <p>FileNotFoundError
 IOError</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def model_framework(X_train, y_train,
-                    model: str,
-                    pretrained: bool = True,
-                    model_path: str = None,
-                    save: bool = False,
-                    t_direct: str = None,
-                    **kwargs):
-    &#34;&#34;&#34;
-    Function that lets the user decide what type of model he wants to use for his data and which parameters to use
-
-    Examples:
-    &gt;&gt;&gt; # Different optimizer and loss function
-    &gt;&gt;&gt; from tf.keras.optimizers import Nadam
-    &gt;&gt;&gt; from tf.keras.losses import Hinge()
-    &gt;&gt;&gt; model = model_framework(X_train = X_train,
-                                y_train = y_train,
-                                model = &#34;cnn&#34;,
-                                pretrained = False,
-                                model_path = None,
-                                epochs = 500,
-                                patience = 10,
-                                optimizer= NAdam(),
-                                loss= Hinge())
-
-
-    Args:
-        X_train: The training dataset
-        y_train: The true labels
-        pretrained: If a new model should be trained or a pretrained model should be used
-                    (True/False, default True uses pretrained model
-        model: A string to enter which model to use (&#34;elnet&#34; = elastic net, &#34;gboost&#34; = gradient boosting,
-                                                     &#34;rf&#34; = random forest, &#34;cnn&#34; = convolutional neural network,
-                                                     &#34;ebm&#34; = explainable boosting machine)
-        model_path: Full path to the folder where the selected pretrained model is stored
-        save: If the newly trained model should be saved
-        t_direct: Target directory to save the model in
-        **kwargs: Additional parameters and options depending on the selected model
-    Returns:
-        A fitted model
-    Raises:
-        FileNotFoundError
-        IOError
-    &#34;&#34;&#34;
-    assert isinstance(model, str), &#34;invalid option, must be string&#34;
-    assert model in [&#34;elnet&#34;, &#34;gboost&#34;, &#34;rf&#34;, &#34;cnn&#34;,
-                     &#34;ebm&#34;], &#34;please provide a valid model (elnet, gboost, ebm, rf or cnn)&#34;
-    assert isinstance(pretrained, bool), &#34;invalid pretrained, must be True/False&#34;
-    if pretrained:
-        pass
-    else:
-        assert len(X_train) == len(y_train), &#34;X_train and y_train must be the same length&#34;
-
-    classification = False
-    if len(set(y_train)) == 2:  # Checking whether classification or regression is needed
-        classification = True
-
-        # loading pretrained models
-    if pretrained:
-        if not os.path.exists(&#34;model_path&#34;):
-            raise FileNotFoundError(&#34;File not found, please specify exact name and make sure the location is correct&#34;)
-        if model == &#34;elnet&#34;:
-            rmodel = pickle.load(open(model_path, &#39;rb&#39;))
-        elif model == &#34;gboost&#34;:
-            rmodel = pickle.load(open(model_path, &#39;rb&#39;))
-        elif model == &#34;ebm&#34;:
-            rmodel = pickle.load(open(model_path, &#39;rb&#39;))
-        elif model == &#34;rf&#34;:
-            rmodel = pickle.load(open(model_path, &#39;rb&#39;))
-        else:
-            try:
-                rmodel = load_model(model_path)
-            except IOError:
-                print(&#34;File not found, please specify exact name and make sure the location is correct&#34;)
-                raise
-
-    else:  # training new models
-        if model == &#34;elnet&#34;:
-            rmodel = model_elastic_net(X_train, y_train, classification, **kwargs)
-
-        elif model == &#34;ebm&#34;:
-            rmodel = EBMmi(X_train, y_train, classification=classification, **kwargs)
-        elif model == &#34;gboost&#34;:
-            rmodel = GB(X_train, y_train, classification=True)
-
-        elif model == &#34;rf&#34;:
-            rmodel = run_random_forest(X_train, y_train, classification, **kwargs)
-
-        else:
-            rmodel = model_brainnet_cnn(X_train, y_train, **kwargs)
-
-    # saving model
-
-    if save:
-        if not os.path.exists(t_direct):
-            raise FileNotFoundError(&#34;Invalid path (write to dir)&#34;)
-        if model == &#34;elnet&#34;:
-            filename = os.path.join(t_direct, &#34;trained_elnet&#34;)
-            pickle.dump(model, open(filename, &#39;wb&#39;))
-        elif model == &#34;ebm&#34;:
-            filename = os.path.join(t_direct, &#34;trained_ebm&#34;)
-            pickle.dump(model, open(filename, &#39;wb&#39;))
-        elif model == &#34;gboost&#34;:
-            filename = os.path.join(t_direct, &#34;trained_gboost&#34;)
-            pickle.dump(model, open(filename, &#39;wb&#39;))
-        elif model == &#34;rf&#34;:
-            filename = os.path.join(t_direct, &#34;trained_randomforest&#34;)
-            pickle.dump(model, open(filename, &#39;wb&#39;))
-
-        else:
-            filename = os.path.join(t_direct, &#34;trained_cnn&#34;)
-            rmodel.save(filename)
-
-    return rmodel</code></pre>
-</details>
 </dd>
 </dl>
 </section>

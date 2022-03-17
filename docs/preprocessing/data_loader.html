@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" />
 <meta name="generator" content="pdoc 0.10.0" />
 <title>connectome.preprocessing.data_loader API documentation</title>
-<meta name="description" content="" />
+<meta name="description" content="several preprocessing and data transformation helpers" />
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/sanitize.min.css" integrity="sha256-PK9q560IAAa6WVRRh76LtCaI8pjTJ2z11v0miyNNjrs=" crossorigin>
 <link rel="preload stylesheet" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/11.0.1/typography.min.css" integrity="sha256-7l/o7C8jubJiy74VsKTidCy1yBkRtiUGbVkYBylBqUg=" crossorigin>
 <link rel="stylesheet preload" as="style" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/github.min.css" crossorigin>
@@ -22,150 +22,7 @@
 <h1 class="title">Module <code>connectome.preprocessing.data_loader</code></h1>
 </header>
 <section id="section-intro">
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">import numpy as np
-import pandas as pd
-
-
-def preprocess_data(dataset: pd.DataFrame) -&gt; tuple:
-    &#34;&#34;&#34;
-    Combines several preprocessing steps which are to be performed on the given dataset.
-    Results are then returned as target and features (splitted)
-
-    Args:
-        dataset: The dataset on which the preprocessing should be performed
-
-    Returns:
-        tuple, of (target, features)
-    &#34;&#34;&#34;
-    assert isinstance(dataset, pd.DataFrame), &#34;supplied input [dataset] is no DataFrame&#34;
-
-    create_target(dataset)
-    df = drop_cases(dataset)
-    df = drop_cols(df)
-    return split_target_data(df)
-
-
-def create_target(dataset: pd.DataFrame) -&gt; None:
-    &#34;&#34;&#34;
-    This function creates the target variable based on the prmdiag column
-
-    Args:
-        dataset: The dataset for which the target variable should be created
-
-    Returns:
-        None
-
-    Raises:
-        KeyError: ...
-    &#34;&#34;&#34;
-    assert isinstance(dataset, pd.DataFrame), &#34;supplied input [dataset] is no DataFrame&#34;
-
-    dataset[&#34;target&#34;] = np.where((dataset[&#39;prmdiag&#39;] == 2) | (dataset[&#39;prmdiag&#39;] == 3), 1., 0.)
-
-
-def drop_cases(dataset: pd.DataFrame) -&gt; pd.DataFrame:
-    &#34;&#34;&#34;
-    Drops the observations of variable prmdiag with value 1 or 4
-
-    Args:
-        dataset: dataset on which the obs. should be dropped
-
-    Returns:
-        None
-
-    Raises:
-        KeyError: ...
-    &#34;&#34;&#34;
-    assert isinstance(dataset, pd.DataFrame), &#34;supplied input [dataset] is no DataFrame&#34;
-
-    return dataset.drop(dataset[(dataset[&#34;prmdiag&#34;] == 1) | (dataset[&#34;prmdiag&#34;] == 4)].index)
-
-
-def drop_cols(dataset: pd.DataFrame, cols: tuple = (&#39;ConnID&#39;, &#39;Repseudonym&#39;,
-                                                  &#39;siteid&#39;, &#39;visdat&#39;, &#39;IDs&#39;, &#34;prmdiag&#34;)) -&gt; pd.DataFrame:
-    &#34;&#34;&#34;
-    Drops the columns which are not needed for further modelling
-
-    Args:
-        dataset: dataset on which the cols should be dropped
-        cols:
-
-    Returns:
-        None
-
-    Raises:
-        KeyError: ...
-    &#34;&#34;&#34;
-    assert isinstance(dataset, pd.DataFrame), &#34;supplied input [dataset] is no DataFrame&#34;
-    assert (isinstance(cols, tuple) &amp; (len(cols) != 0)), &#34;invalid input [cols]&#34;
-
-    return dataset.drop(columns=list(cols))
-
-
-def split_target_data(dataset: pd.DataFrame) -&gt; tuple:
-    &#34;&#34;&#34;
-    splits the given dataset into target variable and features
-
-    Args:
-        dataset:
-
-    Returns:
-        None
-    &#34;&#34;&#34;
-    assert isinstance(dataset, pd.DataFrame), &#34;supplied input [dataset] is no DataFrame&#34;
-
-    y, x = dataset[&#34;target&#34;], dataset.drop(columns=&#34;target&#34;)
-    return y, x
-
-
-def flat_to_mat(x: np.ndarray) -&gt; np.ndarray:
-    &#34;&#34;&#34;
-    - converts a flat np.array into a matrix by turning
-      the values of the array into a symmetric matrix
-    - excluding diagonal
-
-    Args:
-         x: 1D array which should be turned into symmetric matrix
-
-    Returns:
-         np.ndarray - matrix
-
-    &#34;&#34;&#34;
-
-    n = len(x)
-    n_a = int((1 / 2) + np.sqrt((1 / 4) + 2 * n))
-    A = np.zeros(n_a * n_a).reshape(n_a, n_a)
-    ind = np.triu_indices(n_a, k=1)
-    A[ind] = x
-    return A.T + A
-
-
-def flat_to_mat_aggregation(x: np.ndarray) -&gt; np.ndarray:
-    &#34;&#34;&#34;
-    - converts a flat np.array into a matrix by turning
-      the values of the array into a symmetric matrix
-    - excluding diagonal
-
-    Args:
-         x: 1D array which should be turned into symmetric matrix
-
-    Returns:
-         np.ndarray - matrix
-
-    &#34;&#34;&#34;
-
-    n = len(x)
-    n_a = 8
-    A = np.zeros(n_a * n_a).reshape(n_a, n_a)
-    ind = np.triu_indices(n_a, k=0)
-    A[ind] = x
-    mat = A.T + A
-    return mat - .5 * np.diag(mat) * np.identity(8)</code></pre>
-</details>
+<p>several preprocessing and data transformation helpers</p>
 </section>
 <section>
 </section>
@@ -185,33 +42,7 @@ def flat_to_mat_aggregation(x: np.ndarray) -&gt; np.ndarray:
 <dd>The dataset for which the target variable should be created</dd>
 </dl>
 <h2 id="returns">Returns</h2>
-<p>None</p>
-<h2 id="raises">Raises</h2>
-<dl>
-<dt><code>KeyError</code></dt>
-<dd>&hellip;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def create_target(dataset: pd.DataFrame) -&gt; None:
-    &#34;&#34;&#34;
-    This function creates the target variable based on the prmdiag column
-
-    Args:
-        dataset: The dataset for which the target variable should be created
-
-    Returns:
-        None
-
-    Raises:
-        KeyError: ...
-    &#34;&#34;&#34;
-    assert isinstance(dataset, pd.DataFrame), &#34;supplied input [dataset] is no DataFrame&#34;
-
-    dataset[&#34;target&#34;] = np.where((dataset[&#39;prmdiag&#39;] == 2) | (dataset[&#39;prmdiag&#39;] == 3), 1., 0.)</code></pre>
-</details>
+<p>None</p></div>
 </dd>
 <dt id="connectome.preprocessing.data_loader.drop_cases"><code class="name flex">
 <span>def <span class="ident">drop_cases</span></span>(<span>dataset: pandas.core.frame.DataFrame) ‑> pandas.core.frame.DataFrame</span>
@@ -224,33 +55,7 @@ def flat_to_mat_aggregation(x: np.ndarray) -&gt; np.ndarray:
 <dd>dataset on which the obs. should be dropped</dd>
 </dl>
 <h2 id="returns">Returns</h2>
-<p>None</p>
-<h2 id="raises">Raises</h2>
-<dl>
-<dt><code>KeyError</code></dt>
-<dd>&hellip;</dd>
-</dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def drop_cases(dataset: pd.DataFrame) -&gt; pd.DataFrame:
-    &#34;&#34;&#34;
-    Drops the observations of variable prmdiag with value 1 or 4
-
-    Args:
-        dataset: dataset on which the obs. should be dropped
-
-    Returns:
-        None
-
-    Raises:
-        KeyError: ...
-    &#34;&#34;&#34;
-    assert isinstance(dataset, pd.DataFrame), &#34;supplied input [dataset] is no DataFrame&#34;
-
-    return dataset.drop(dataset[(dataset[&#34;prmdiag&#34;] == 1) | (dataset[&#34;prmdiag&#34;] == 4)].index)</code></pre>
-</details>
+<p>None</p></div>
 </dd>
 <dt id="connectome.preprocessing.data_loader.drop_cols"><code class="name flex">
 <span>def <span class="ident">drop_cols</span></span>(<span>dataset: pandas.core.frame.DataFrame, cols: tuple = ('ConnID', 'Repseudonym', 'siteid', 'visdat', 'IDs', 'prmdiag')) ‑> pandas.core.frame.DataFrame</span>
@@ -270,30 +75,6 @@ def flat_to_mat_aggregation(x: np.ndarray) -&gt; np.ndarray:
 <dt><code>KeyError</code></dt>
 <dd>&hellip;</dd>
 </dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def drop_cols(dataset: pd.DataFrame, cols: tuple = (&#39;ConnID&#39;, &#39;Repseudonym&#39;,
-                                                  &#39;siteid&#39;, &#39;visdat&#39;, &#39;IDs&#39;, &#34;prmdiag&#34;)) -&gt; pd.DataFrame:
-    &#34;&#34;&#34;
-    Drops the columns which are not needed for further modelling
-
-    Args:
-        dataset: dataset on which the cols should be dropped
-        cols:
-
-    Returns:
-        None
-
-    Raises:
-        KeyError: ...
-    &#34;&#34;&#34;
-    assert isinstance(dataset, pd.DataFrame), &#34;supplied input [dataset] is no DataFrame&#34;
-    assert (isinstance(cols, tuple) &amp; (len(cols) != 0)), &#34;invalid input [cols]&#34;
-
-    return dataset.drop(columns=list(cols))</code></pre>
-</details>
 </dd>
 <dt id="connectome.preprocessing.data_loader.flat_to_mat"><code class="name flex">
 <span>def <span class="ident">flat_to_mat</span></span>(<span>x: numpy.ndarray) ‑> numpy.ndarray</span>
@@ -304,6 +85,15 @@ def flat_to_mat_aggregation(x: np.ndarray) -&gt; np.ndarray:
 the values of the array into a symmetric matrix</li>
 <li>excluding diagonal</li>
 </ul>
+<p>Examples:</p>
+<pre><code class="language-python-repl">&gt;&gt;&gt; import numpy as np
+&gt;&gt;&gt; from connectome.preprocessing.data_loader import flat_to_mat
+&gt;&gt;&gt; k = 50 #
+&gt;&gt;&gt; m = int((k*k)/2 - k/2)
+&gt;&gt;&gt; x = np.random.standard_normal(size=m)
+&gt;&gt;&gt; mat = flat_to_mat(x)
+&gt;&gt;&gt; print(mat)
+</code></pre>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>x</code></strong></dt>
@@ -311,31 +101,6 @@ the values of the array into a symmetric matrix</li>
 </dl>
 <h2 id="returns">Returns</h2>
 <p>np.ndarray - matrix</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def flat_to_mat(x: np.ndarray) -&gt; np.ndarray:
-    &#34;&#34;&#34;
-    - converts a flat np.array into a matrix by turning
-      the values of the array into a symmetric matrix
-    - excluding diagonal
-
-    Args:
-         x: 1D array which should be turned into symmetric matrix
-
-    Returns:
-         np.ndarray - matrix
-
-    &#34;&#34;&#34;
-
-    n = len(x)
-    n_a = int((1 / 2) + np.sqrt((1 / 4) + 2 * n))
-    A = np.zeros(n_a * n_a).reshape(n_a, n_a)
-    ind = np.triu_indices(n_a, k=1)
-    A[ind] = x
-    return A.T + A</code></pre>
-</details>
 </dd>
 <dt id="connectome.preprocessing.data_loader.flat_to_mat_aggregation"><code class="name flex">
 <span>def <span class="ident">flat_to_mat_aggregation</span></span>(<span>x: numpy.ndarray) ‑> numpy.ndarray</span>
@@ -344,8 +109,16 @@ the values of the array into a symmetric matrix</li>
 <div class="desc"><ul>
 <li>converts a flat np.array into a matrix by turning
 the values of the array into a symmetric matrix</li>
-<li>excluding diagonal</li>
 </ul>
+<p>Examples:</p>
+<pre><code class="language-python-repl">&gt;&gt;&gt; import numpy as np
+&gt;&gt;&gt; from connectome.preprocessing.data_loader import flat_to_mat_aggregation
+&gt;&gt;&gt; k = 8 #
+&gt;&gt;&gt; m = int((k*k)/2 + k/2)
+&gt;&gt;&gt; x = np.random.standard_normal(size=m)
+&gt;&gt;&gt; mat = flat_to_mat_aggregation(x)
+&gt;&gt;&gt; print(mat)
+</code></pre>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>x</code></strong></dt>
@@ -353,32 +126,6 @@ the values of the array into a symmetric matrix</li>
 </dl>
 <h2 id="returns">Returns</h2>
 <p>np.ndarray - matrix</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def flat_to_mat_aggregation(x: np.ndarray) -&gt; np.ndarray:
-    &#34;&#34;&#34;
-    - converts a flat np.array into a matrix by turning
-      the values of the array into a symmetric matrix
-    - excluding diagonal
-
-    Args:
-         x: 1D array which should be turned into symmetric matrix
-
-    Returns:
-         np.ndarray - matrix
-
-    &#34;&#34;&#34;
-
-    n = len(x)
-    n_a = 8
-    A = np.zeros(n_a * n_a).reshape(n_a, n_a)
-    ind = np.triu_indices(n_a, k=0)
-    A[ind] = x
-    mat = A.T + A
-    return mat - .5 * np.diag(mat) * np.identity(8)</code></pre>
-</details>
 </dd>
 <dt id="connectome.preprocessing.data_loader.preprocess_data"><code class="name flex">
 <span>def <span class="ident">preprocess_data</span></span>(<span>dataset: pandas.core.frame.DataFrame) ‑> tuple</span>
@@ -393,28 +140,6 @@ Results are then returned as target and features (splitted)</p>
 </dl>
 <h2 id="returns">Returns</h2>
 <p>tuple, of (target, features)</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def preprocess_data(dataset: pd.DataFrame) -&gt; tuple:
-    &#34;&#34;&#34;
-    Combines several preprocessing steps which are to be performed on the given dataset.
-    Results are then returned as target and features (splitted)
-
-    Args:
-        dataset: The dataset on which the preprocessing should be performed
-
-    Returns:
-        tuple, of (target, features)
-    &#34;&#34;&#34;
-    assert isinstance(dataset, pd.DataFrame), &#34;supplied input [dataset] is no DataFrame&#34;
-
-    create_target(dataset)
-    df = drop_cases(dataset)
-    df = drop_cols(df)
-    return split_target_data(df)</code></pre>
-</details>
 </dd>
 <dt id="connectome.preprocessing.data_loader.split_target_data"><code class="name flex">
 <span>def <span class="ident">split_target_data</span></span>(<span>dataset: pandas.core.frame.DataFrame) ‑> tuple</span>
@@ -425,25 +150,6 @@ Results are then returned as target and features (splitted)</p>
 <p>dataset:</p>
 <h2 id="returns">Returns</h2>
 <p>None</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def split_target_data(dataset: pd.DataFrame) -&gt; tuple:
-    &#34;&#34;&#34;
-    splits the given dataset into target variable and features
-
-    Args:
-        dataset:
-
-    Returns:
-        None
-    &#34;&#34;&#34;
-    assert isinstance(dataset, pd.DataFrame), &#34;supplied input [dataset] is no DataFrame&#34;
-
-    y, x = dataset[&#34;target&#34;], dataset.drop(columns=&#34;target&#34;)
-    return y, x</code></pre>
-</details>
 </dd>
 </dl>
 </section>

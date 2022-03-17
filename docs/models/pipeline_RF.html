@@ -23,53 +23,6 @@
 </header>
 <section id="section-intro">
 <p>Run Random Forest</p>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">&#34;&#34;&#34;
-Run Random Forest
-&#34;&#34;&#34;
-import pandas as pd
-import numpy as np
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.ensemble import RandomForestRegressor
-
-
-def run_random_forest(X_train, y_train, 
-                            classification: bool = True, verbose = 1,
-                            **kwargs):
-    &#34;&#34;&#34;
-  Function that fits a random forest model. 
-  See also https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html and https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html
-  
-  Args:
-        X_train: The training dataset
-        y_train: The true labels
-        classification: classification task -&gt; logistic regression or regression task -&gt; linear model
-        verbose: amount of verbosity, default = 1 
-        
-  Returns:
-        Returns fitted model
-    &#34;&#34;&#34;
-
-    assert isinstance(X_train, pd.DataFrame), &#34;provided X_train is no pd.DataFrame&#34;
-    assert isinstance(y_train, pd.Series), &#34;provided y_train is no pd.Series&#34;
-
-
-    if classification:
-    
-      model = RandomForestClassifier(verbose = verbose, **kwargs)
-    
-    else:
-
-      model = RandomForestRegressor(verbose = verbose, **kwargs)
-    
-
-    fit_model = model.fit(X_train, y_train)
-
-    return fit_model  </code></pre>
-</details>
 </section>
 <section>
 </section>
@@ -79,11 +32,16 @@ def run_random_forest(X_train, y_train,
 <h2 class="section-title" id="header-functions">Functions</h2>
 <dl>
 <dt id="connectome.models.pipeline_RF.run_random_forest"><code class="name flex">
-<span>def <span class="ident">run_random_forest</span></span>(<span>X_train, y_train, classification: bool = True, verbose=1, **kwargs)</span>
+<span>def <span class="ident">run_random_forest</span></span>(<span>X_train, y_train, classification: bool = True, verbose=0, **kwargs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Function that fits a random forest model.
-See also <a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html">https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html</a> and <a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html">https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html</a></p>
+See also <a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html">https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html</a> and <a href="https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html">https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html</a> for further arguments that can be specified.</p>
+<p>Examples:</p>
+<pre><code class="language-python-repl">&gt;&gt;&gt; model = run_random_forest(X_train = X_train,
+                              y_train = y_train,
+                              classification = True)   
+</code></pre>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>X_train</code></strong></dt>
@@ -93,48 +51,10 @@ See also <a href="https://scikit-learn.org/stable/modules/generated/sklearn.ense
 <dt><strong><code>classification</code></strong></dt>
 <dd>classification task -&gt; logistic regression or regression task -&gt; linear model</dd>
 <dt><strong><code>verbose</code></strong></dt>
-<dd>amount of verbosity, default = 1 </dd>
+<dd>amount of verbosity, default = 0 </dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <p>Returns fitted model</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def run_random_forest(X_train, y_train, 
-                            classification: bool = True, verbose = 1,
-                            **kwargs):
-    &#34;&#34;&#34;
-  Function that fits a random forest model. 
-  See also https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html and https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestRegressor.html
-  
-  Args:
-        X_train: The training dataset
-        y_train: The true labels
-        classification: classification task -&gt; logistic regression or regression task -&gt; linear model
-        verbose: amount of verbosity, default = 1 
-        
-  Returns:
-        Returns fitted model
-    &#34;&#34;&#34;
-
-    assert isinstance(X_train, pd.DataFrame), &#34;provided X_train is no pd.DataFrame&#34;
-    assert isinstance(y_train, pd.Series), &#34;provided y_train is no pd.Series&#34;
-
-
-    if classification:
-    
-      model = RandomForestClassifier(verbose = verbose, **kwargs)
-    
-    else:
-
-      model = RandomForestRegressor(verbose = verbose, **kwargs)
-    
-
-    fit_model = model.fit(X_train, y_train)
-
-    return fit_model  </code></pre>
-</details>
 </dd>
 </dl>
 </section>

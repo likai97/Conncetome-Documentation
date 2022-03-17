@@ -23,144 +23,6 @@
 </header>
 <section id="section-intro">
 <p>The custom Edge-to-Edge layer developed by Kawahara et al.</p>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">&#34;&#34;&#34;
-The custom Edge-to-Edge layer developed by Kawahara et al.
-&#34;&#34;&#34;
-# Construction of the Edge-2-Edge layer using Keras backend.
-# Source: https://notebook.community/AmineEch/BrainCNN/.ipynb_checkpoints/BrainNetCNN-checkpoint
-# Original Paper:
-# Kawahara, J., Brown, C. J., Miller, S. P., Booth, B. G., Chau, V., Grunau, R. E.,
-# Zwicker, J. G., and Hamarneh, G. (2017). BrainNetCNN:
-# Convolutional neural networks for brain networks; towards predicting neurodevelopment.
-# NeuroImage, 146(July), 1038–1049
-from tensorflow import keras
-from keras import backend as K
-from keras import activations
-from keras import initializers
-from keras import regularizers
-from keras import constraints
-from keras.layers import Layer
-from keras.layers import InputSpec
-from keras.utils import conv_utils
-
-class E2E_conv(Layer):
-    def __init__(self, rank,
-                 filters,
-                 kernel_size,
-                 strides=1,
-                 padding=&#39;valid&#39;,
-                 data_format=None,
-                 dilation_rate=1,
-                 activation=None,
-                 use_bias=False,
-                 kernel_initializer=&#39;glorot_uniform&#39;,
-                 bias_initializer=&#39;zeros&#39;,
-                 kernel_regularizer=None,
-                 bias_regularizer=None,
-                 activity_regularizer=None,
-                 kernel_constraint=None,
-                 bias_constraint=None,
-                 **kwargs):
-        super(E2E_conv, self).__init__(**kwargs)
-        self.rank = rank
-        self.filters = filters
-        self.kernel_size = conv_utils.normalize_tuple(kernel_size, rank, &#39;kernel_size&#39;)
-        self.strides = conv_utils.normalize_tuple(strides, rank, &#39;strides&#39;)
-        self.padding = conv_utils.normalize_padding(padding)
-        self.data_format = conv_utils.normalize_data_format(data_format)
-        self.dilation_rate = conv_utils.normalize_tuple(dilation_rate, rank, &#39;dilation_rate&#39;)
-        self.activation = activations.get(activation)
-        self.use_bias = use_bias
-        self.kernel_initializer = initializers.get(kernel_initializer)
-        self.bias_initializer = initializers.get(bias_initializer)
-        self.kernel_regularizer = regularizers.get(kernel_regularizer)
-        self.bias_regularizer = regularizers.get(bias_regularizer)
-        self.activity_regularizer = regularizers.get(activity_regularizer)
-        self.kernel_constraint = constraints.get(kernel_constraint)
-        self.bias_constraint = constraints.get(bias_constraint)
-        self.input_spec = InputSpec(ndim=self.rank + 2)
-
-    def build(self, input_shape):
-        if self.data_format == &#39;channels_first&#39;:
-            channel_axis = 1
-        else:
-            channel_axis = -1
-        if input_shape[channel_axis] is None:
-            raise ValueError(&#39;The channel dimension of the inputs &#39;
-                             &#39;should be defined. Found `None`.&#39;)
-        input_dim = input_shape[channel_axis]
-        kernel_shape = self.kernel_size + (input_dim, self.filters)
-
-        self.kernel = self.add_weight(shape=kernel_shape,
-                                      initializer=self.kernel_initializer,
-                                      name=&#39;kernel&#39;,
-                                      regularizer=self.kernel_regularizer,
-                                      constraint=self.kernel_constraint)
-        if self.use_bias:
-            self.bias = self.add_weight(shape=(self.filters,),
-                                        initializer=self.bias_initializer,
-                                        name=&#39;bias&#39;,
-                                        regularizer=self.bias_regularizer,
-                                        constraint=self.bias_constraint)
-        else:
-            self.bias = None
-        # Set input spec.
-        self.input_spec = InputSpec(ndim=self.rank + 2,
-                                    axes={channel_axis: input_dim})
-        self.built = True
-
-    def call(self, inputs):
-        kernel_shape=K.get_value(self.kernel).shape
-        d=kernel_shape[1]
-        kernel1xd = K.reshape(self.kernel[0,:],(1,kernel_shape[1],kernel_shape[2],kernel_shape[3]))
-        kerneldx1 = K.reshape(self.kernel[1,:], (kernel_shape[1],1, kernel_shape[2], kernel_shape[3]))
-        conv1xd = K.conv2d(
-            inputs,
-            kernel1xd,
-            strides=self.strides,
-            padding=self.padding,
-            data_format=self.data_format,
-            dilation_rate=self.dilation_rate)
-        convdx1 = K.conv2d(
-            inputs,
-            kerneldx1,
-            strides=self.strides,
-            padding=self.padding,
-            data_format=self.data_format,
-            dilation_rate=self.dilation_rate)
-        concat1 = K.concatenate([convdx1]*d,axis=1)
-        concat2 = K.concatenate([conv1xd]*d,axis=2)
-        return concat1+concat2
-
-    def compute_output_shape(self, input_shape):
-        return (input_shape[0],input_shape[1],input_shape[2],self.filters)
-
-    def get_config(self):
-        config = {
-            &#39;rank&#39;: self.rank,
-            &#39;filters&#39;: self.filters,
-            &#39;kernel_size&#39;: self.kernel_size,
-            &#39;strides&#39;: self.strides,
-            &#39;padding&#39;: self.padding,
-            &#39;data_format&#39;: self.data_format,
-            &#39;dilation_rate&#39;: self.dilation_rate,
-            &#39;activation&#39;: activations.serialize(self.activation),
-            &#39;use_bias&#39;: self.use_bias,
-            &#39;kernel_initializer&#39;: initializers.serialize(self.kernel_initializer),
-            &#39;bias_initializer&#39;: initializers.serialize(self.bias_initializer),
-            &#39;kernel_regularizer&#39;: regularizers.serialize(self.kernel_regularizer),
-            &#39;bias_regularizer&#39;: regularizers.serialize(self.bias_regularizer),
-            &#39;activity_regularizer&#39;: regularizers.serialize(self.activity_regularizer),
-            &#39;kernel_constraint&#39;: constraints.serialize(self.kernel_constraint),
-            &#39;bias_constraint&#39;: constraints.serialize(self.bias_constraint)
-        }
-        base_config = super(E2E_conv, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))</code></pre>
-</details>
 </section>
 <section>
 </section>
@@ -179,8 +41,16 @@ class E2E_conv(Layer):
 <div class="desc"><p>This is the class from which all layers inherit.</p>
 <p>A layer is a callable object that takes as input one or more tensors and
 that outputs one or more tensors. It involves <em>computation</em>, defined
-in the <code>call()</code> method, and a <em>state</em> (weight variables), defined
-either in the constructor <code>__init__()</code> or in the <code>build()</code> method.</p>
+in the <code>call()</code> method, and a <em>state</em> (weight variables). State can be
+created in various places, at the convenience of the subclass implementer:</p>
+<ul>
+<li>in <code>__init__()</code>;</li>
+<li>in the optional <code>build()</code> method, which is invoked by the first
+<code>__call__()</code> to the layer, and supplies the shape(s) of the input(s),
+which may not have been known at initialization time;</li>
+<li>in the first invocation of <code>call()</code>, with some caveats discussed
+below.</li>
+</ul>
 <p>Users will just instantiate a layer and then treat it as a callable.</p>
 <h2 id="args">Args</h2>
 <dl>
@@ -237,15 +107,17 @@ constraints on inputs that can be accepted by the layer.</dd>
 </dl>
 <p>We recommend that descendants of <code>Layer</code> implement the following methods:</p>
 <ul>
-<li><code>__init__()</code>: Defines custom layer attributes, and creates layer state
-variables that do not depend on input shapes, using <code>add_weight()</code>.</li>
+<li><code>__init__()</code>: Defines custom layer attributes, and creates layer weights
+that do not depend on input shapes, using <code>add_weight()</code>, or other state.</li>
 <li><code>build(self, input_shape)</code>: This method can be used to create weights that
-depend on the shape(s) of the input(s), using <code>add_weight()</code>. <code>__call__()</code>
-will automatically build the layer (if it has not been built yet) by
-calling <code>build()</code>.</li>
+depend on the shape(s) of the input(s), using <code>add_weight()</code>, or other
+state. <code>__call__()</code> will automatically build the layer (if it has not been
+built yet) by calling <code>build()</code>.</li>
 <li><code>call(self, inputs, *args, **kwargs)</code>: Called in <code>__call__</code> after making
 sure <code>build()</code> has been called. <code>call()</code> performs the logic of applying the
-layer to the input tensors (which should be passed in as argument).
+layer to the <code>inputs</code>. The first invocation may additionally create state
+that could not be conveniently created in <code>build()</code>; see its docstring
+for details.
 Two reserved keyword arguments you can optionally use in <code>call()</code> are:<ul>
 <li><code>training</code> (boolean, whether the call is in inference mode or training
 mode). See more details in <a href="https://www.tensorflow.org/guide/keras/custom_layers_and_models#privileged_training_argument_in_the_call_method">the layer/model subclassing guide</a></li>
@@ -348,129 +220,11 @@ assert my_sum.trainable_weights == []
 </code></pre>
 <p>For more information about creating layers, see the guide
 <a href="https://www.tensorflow.org/guide/keras/custom_layers_and_models">Making new Layers and Models via subclassing</a></p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">class E2E_conv(Layer):
-    def __init__(self, rank,
-                 filters,
-                 kernel_size,
-                 strides=1,
-                 padding=&#39;valid&#39;,
-                 data_format=None,
-                 dilation_rate=1,
-                 activation=None,
-                 use_bias=False,
-                 kernel_initializer=&#39;glorot_uniform&#39;,
-                 bias_initializer=&#39;zeros&#39;,
-                 kernel_regularizer=None,
-                 bias_regularizer=None,
-                 activity_regularizer=None,
-                 kernel_constraint=None,
-                 bias_constraint=None,
-                 **kwargs):
-        super(E2E_conv, self).__init__(**kwargs)
-        self.rank = rank
-        self.filters = filters
-        self.kernel_size = conv_utils.normalize_tuple(kernel_size, rank, &#39;kernel_size&#39;)
-        self.strides = conv_utils.normalize_tuple(strides, rank, &#39;strides&#39;)
-        self.padding = conv_utils.normalize_padding(padding)
-        self.data_format = conv_utils.normalize_data_format(data_format)
-        self.dilation_rate = conv_utils.normalize_tuple(dilation_rate, rank, &#39;dilation_rate&#39;)
-        self.activation = activations.get(activation)
-        self.use_bias = use_bias
-        self.kernel_initializer = initializers.get(kernel_initializer)
-        self.bias_initializer = initializers.get(bias_initializer)
-        self.kernel_regularizer = regularizers.get(kernel_regularizer)
-        self.bias_regularizer = regularizers.get(bias_regularizer)
-        self.activity_regularizer = regularizers.get(activity_regularizer)
-        self.kernel_constraint = constraints.get(kernel_constraint)
-        self.bias_constraint = constraints.get(bias_constraint)
-        self.input_spec = InputSpec(ndim=self.rank + 2)
-
-    def build(self, input_shape):
-        if self.data_format == &#39;channels_first&#39;:
-            channel_axis = 1
-        else:
-            channel_axis = -1
-        if input_shape[channel_axis] is None:
-            raise ValueError(&#39;The channel dimension of the inputs &#39;
-                             &#39;should be defined. Found `None`.&#39;)
-        input_dim = input_shape[channel_axis]
-        kernel_shape = self.kernel_size + (input_dim, self.filters)
-
-        self.kernel = self.add_weight(shape=kernel_shape,
-                                      initializer=self.kernel_initializer,
-                                      name=&#39;kernel&#39;,
-                                      regularizer=self.kernel_regularizer,
-                                      constraint=self.kernel_constraint)
-        if self.use_bias:
-            self.bias = self.add_weight(shape=(self.filters,),
-                                        initializer=self.bias_initializer,
-                                        name=&#39;bias&#39;,
-                                        regularizer=self.bias_regularizer,
-                                        constraint=self.bias_constraint)
-        else:
-            self.bias = None
-        # Set input spec.
-        self.input_spec = InputSpec(ndim=self.rank + 2,
-                                    axes={channel_axis: input_dim})
-        self.built = True
-
-    def call(self, inputs):
-        kernel_shape=K.get_value(self.kernel).shape
-        d=kernel_shape[1]
-        kernel1xd = K.reshape(self.kernel[0,:],(1,kernel_shape[1],kernel_shape[2],kernel_shape[3]))
-        kerneldx1 = K.reshape(self.kernel[1,:], (kernel_shape[1],1, kernel_shape[2], kernel_shape[3]))
-        conv1xd = K.conv2d(
-            inputs,
-            kernel1xd,
-            strides=self.strides,
-            padding=self.padding,
-            data_format=self.data_format,
-            dilation_rate=self.dilation_rate)
-        convdx1 = K.conv2d(
-            inputs,
-            kerneldx1,
-            strides=self.strides,
-            padding=self.padding,
-            data_format=self.data_format,
-            dilation_rate=self.dilation_rate)
-        concat1 = K.concatenate([convdx1]*d,axis=1)
-        concat2 = K.concatenate([conv1xd]*d,axis=2)
-        return concat1+concat2
-
-    def compute_output_shape(self, input_shape):
-        return (input_shape[0],input_shape[1],input_shape[2],self.filters)
-
-    def get_config(self):
-        config = {
-            &#39;rank&#39;: self.rank,
-            &#39;filters&#39;: self.filters,
-            &#39;kernel_size&#39;: self.kernel_size,
-            &#39;strides&#39;: self.strides,
-            &#39;padding&#39;: self.padding,
-            &#39;data_format&#39;: self.data_format,
-            &#39;dilation_rate&#39;: self.dilation_rate,
-            &#39;activation&#39;: activations.serialize(self.activation),
-            &#39;use_bias&#39;: self.use_bias,
-            &#39;kernel_initializer&#39;: initializers.serialize(self.kernel_initializer),
-            &#39;bias_initializer&#39;: initializers.serialize(self.bias_initializer),
-            &#39;kernel_regularizer&#39;: regularizers.serialize(self.kernel_regularizer),
-            &#39;bias_regularizer&#39;: regularizers.serialize(self.bias_regularizer),
-            &#39;activity_regularizer&#39;: regularizers.serialize(self.activity_regularizer),
-            &#39;kernel_constraint&#39;: constraints.serialize(self.kernel_constraint),
-            &#39;bias_constraint&#39;: constraints.serialize(self.bias_constraint)
-        }
-        base_config = super(E2E_conv, self).get_config()
-        return dict(list(base_config.items()) + list(config.items()))</code></pre>
-</details>
 <h3>Ancestors</h3>
 <ul class="hlist">
 <li>keras.engine.base_layer.Layer</li>
 <li>tensorflow.python.module.module.Module</li>
-<li>tensorflow.python.training.tracking.tracking.AutoTrackable</li>
+<li>tensorflow.python.training.tracking.autotrackable.AutoTrackable</li>
 <li>tensorflow.python.training.tracking.base.Trackable</li>
 <li>keras.utils.version_utils.LayerVersionSelector</li>
 </ul>
@@ -483,8 +237,10 @@ assert my_sum.trainable_weights == []
 <div class="desc"><p>Creates the variables of the layer (optional, for subclass implementers).</p>
 <p>This is a method that implementers of subclasses of <code>Layer</code> or <code>Model</code>
 can override if they need a state-creation step in-between
-layer instantiation and layer call.</p>
-<p>This is typically used to create the weights of <code>Layer</code> subclasses.</p>
+layer instantiation and layer call. It is invoked automatically before
+the first execution of <code>call()</code>.</p>
+<p>This is typically used to create the weights of <code>Layer</code> subclasses
+(at the discretion of the subclass implementer).</p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>input_shape</code></strong></dt>
@@ -492,49 +248,16 @@ layer instantiation and layer call.</p>
 <code>TensorShape</code> if the layer expects a list of inputs
 (one instance per input).</dd>
 </dl></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def build(self, input_shape):
-    if self.data_format == &#39;channels_first&#39;:
-        channel_axis = 1
-    else:
-        channel_axis = -1
-    if input_shape[channel_axis] is None:
-        raise ValueError(&#39;The channel dimension of the inputs &#39;
-                         &#39;should be defined. Found `None`.&#39;)
-    input_dim = input_shape[channel_axis]
-    kernel_shape = self.kernel_size + (input_dim, self.filters)
-
-    self.kernel = self.add_weight(shape=kernel_shape,
-                                  initializer=self.kernel_initializer,
-                                  name=&#39;kernel&#39;,
-                                  regularizer=self.kernel_regularizer,
-                                  constraint=self.kernel_constraint)
-    if self.use_bias:
-        self.bias = self.add_weight(shape=(self.filters,),
-                                    initializer=self.bias_initializer,
-                                    name=&#39;bias&#39;,
-                                    regularizer=self.bias_regularizer,
-                                    constraint=self.bias_constraint)
-    else:
-        self.bias = None
-    # Set input spec.
-    self.input_spec = InputSpec(ndim=self.rank + 2,
-                                axes={channel_axis: input_dim})
-    self.built = True</code></pre>
-</details>
 </dd>
 <dt id="connectome.models.E2E_conv.E2E_conv.call"><code class="name flex">
 <span>def <span class="ident">call</span></span>(<span>self, inputs)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>This is where the layer's logic lives.</p>
-<p>Note here that <code>call()</code> method in <code>tf.keras</code> is little bit different
-from <code>keras</code> API. In <code>keras</code> API, you can pass support masking for
-layers as additional arguments. Whereas <code>tf.keras</code> has <code>compute_mask()</code>
-method to support masking.</p>
+<p>The <code>call()</code> method may not create state (except in its first invocation,
+wrapping the creation of variables or other resources in <code>tf.init_scope()</code>).
+It is recommended to create state in <code>__init__()</code>, or the <code>build()</code> method
+that is called automatically before <code>call()</code> executes the first time.</p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>inputs</code></strong></dt>
@@ -572,42 +295,15 @@ layer with masking support).</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <p>A tensor or list/tuple of tensors.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def call(self, inputs):
-    kernel_shape=K.get_value(self.kernel).shape
-    d=kernel_shape[1]
-    kernel1xd = K.reshape(self.kernel[0,:],(1,kernel_shape[1],kernel_shape[2],kernel_shape[3]))
-    kerneldx1 = K.reshape(self.kernel[1,:], (kernel_shape[1],1, kernel_shape[2], kernel_shape[3]))
-    conv1xd = K.conv2d(
-        inputs,
-        kernel1xd,
-        strides=self.strides,
-        padding=self.padding,
-        data_format=self.data_format,
-        dilation_rate=self.dilation_rate)
-    convdx1 = K.conv2d(
-        inputs,
-        kerneldx1,
-        strides=self.strides,
-        padding=self.padding,
-        data_format=self.data_format,
-        dilation_rate=self.dilation_rate)
-    concat1 = K.concatenate([convdx1]*d,axis=1)
-    concat2 = K.concatenate([conv1xd]*d,axis=2)
-    return concat1+concat2</code></pre>
-</details>
 </dd>
 <dt id="connectome.models.E2E_conv.E2E_conv.compute_output_shape"><code class="name flex">
 <span>def <span class="ident">compute_output_shape</span></span>(<span>self, input_shape)</span>
 </code></dt>
 <dd>
 <div class="desc"><p>Computes the output shape of the layer.</p>
-<p>If the layer has not been built, this method will call <code>build</code> on the
-layer. This assumes that the layer will later be used with inputs that
-match the input shape provided here.</p>
+<p>This method will cause the layer's state to be built, if that has not
+happened before. This requires that the layer will later be used with
+inputs that match the input shape provided here.</p>
 <h2 id="args">Args</h2>
 <dl>
 <dt><strong><code>input_shape</code></strong></dt>
@@ -618,13 +314,6 @@ instead of an integer.</dd>
 </dl>
 <h2 id="returns">Returns</h2>
 <p>An input shape tuple.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def compute_output_shape(self, input_shape):
-    return (input_shape[0],input_shape[1],input_shape[2],self.filters)</code></pre>
-</details>
 </dd>
 <dt id="connectome.models.E2E_conv.E2E_conv.get_config"><code class="name flex">
 <span>def <span class="ident">get_config</span></span>(<span>self)</span>
@@ -643,32 +332,6 @@ every time it is called. The callers should make a copy of the returned dict
 if they want to modify it.</p>
 <h2 id="returns">Returns</h2>
 <p>Python dictionary.</p></div>
-<details class="source">
-<summary>
-<span>Expand source code</span>
-</summary>
-<pre><code class="python">def get_config(self):
-    config = {
-        &#39;rank&#39;: self.rank,
-        &#39;filters&#39;: self.filters,
-        &#39;kernel_size&#39;: self.kernel_size,
-        &#39;strides&#39;: self.strides,
-        &#39;padding&#39;: self.padding,
-        &#39;data_format&#39;: self.data_format,
-        &#39;dilation_rate&#39;: self.dilation_rate,
-        &#39;activation&#39;: activations.serialize(self.activation),
-        &#39;use_bias&#39;: self.use_bias,
-        &#39;kernel_initializer&#39;: initializers.serialize(self.kernel_initializer),
-        &#39;bias_initializer&#39;: initializers.serialize(self.bias_initializer),
-        &#39;kernel_regularizer&#39;: regularizers.serialize(self.kernel_regularizer),
-        &#39;bias_regularizer&#39;: regularizers.serialize(self.bias_regularizer),
-        &#39;activity_regularizer&#39;: regularizers.serialize(self.activity_regularizer),
-        &#39;kernel_constraint&#39;: constraints.serialize(self.kernel_constraint),
-        &#39;bias_constraint&#39;: constraints.serialize(self.bias_constraint)
-    }
-    base_config = super(E2E_conv, self).get_config()
-    return dict(list(base_config.items()) + list(config.items()))</code></pre>
-</details>
 </dd>
 </dl>
 </dd>
